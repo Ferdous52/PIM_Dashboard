@@ -750,7 +750,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
 #============================================================================================================================================================================================
  
     elif page == "Standards":
-         st.markdown("""<style>
+        st.markdown("""<style>
                        .block-container {padding-top: 0rem;}
                        .block-container h1,
                        .block-container h2,
