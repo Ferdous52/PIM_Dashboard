@@ -789,7 +789,6 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                        .block-container span,
                        .block-container div {color: black !important;}
                        </style>""", unsafe_allow_html=True)
-
         st.subheader("Teacher's Priority Area")
         tab1, tab2, tab3 = st.tabs(["Priority by Standard", "Priority by Teacher Monthly", "Priority by School and Staff"])
         with tab1:
