@@ -698,13 +698,16 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
     elif page == "Standards":
         st.markdown("""<style>.block-container {padding-top: 0rem;}</style>""", unsafe_allow_html=True)
         st.subheader("Standards Meet")
-        st.markdown("----")
-        standards = standard_grade(df)
-        col1, col2 = st.columns(2)
-        with col1:
-            st.dataframe(standards, width = "content", height = "content")
-        with col2:
-            st.pyplot(stnadard_LF_graph(df))
+        tab1, tab2 = st.tabs(["Standard Meet Monthly", "Standard Meet by Staff"])
+        with tab1:
+            pass
+        with tab2:
+            standards = standard_grade(df)
+            col1, col2 = st.columns(2)
+            with col1:
+                st.dataframe(standards, width = "content", height = "content")
+            with col2:
+                st.pyplot(stnadard_LF_graph(df))
 
 #==============================================================================================================================================================================================
  
