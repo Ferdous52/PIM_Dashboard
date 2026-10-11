@@ -317,7 +317,20 @@ def stnadard_LF_graph(df: pd.DataFrame):
     ax.legend()
     fig.tight_layout()
     return fig
- 
+
+def standard_month(df: pd.DataFrame):
+    stnd_month = df_long(df)
+    stnd_month = pd.pivot_table(stnd_month,
+                                index = "Month",
+                                values="Project ID",
+                                columns = "Meeting Minimum Standards By Grade?",
+                                aggfunc="count",
+                                margins=True,
+                                margins_name="TOTAL")
+    stnd_month = stnd_month.fillna(0) 
+    return stnd_month
+
+
 def standard_graph(df: pd.DataFrame):
     stnd_gph = df_long(df)
     counts_by_standard = (stnd_gph["Meeting Minimum Standards By Grade?"].value_counts())
@@ -708,7 +721,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
         st.subheader("Standards Meet")
         tab1, tab2 = st.tabs(["Standard Meet Monthly", "Standard Meet by Staff"])
         with tab1:
-            pass
+            st.dataframe(standard_month(df))
         with tab2:
             standards = standard_grade_lf(df)
             col1, col2 = st.columns(2)
