@@ -339,6 +339,25 @@ def standard_month(df: pd.DataFrame) -> pd.DataFrame:
     stnd_month = stnd_month.set_index("Month")
     return stnd_month
 
+def standard_month_gph(df: pd.DataFrame):
+    st_mn_gh = standard_month(df)
+    x = np.arange(len(mm.index))
+    width = 0.4
+    fig, ax = plt.subplots(figsize=(8, 5))
+    bars1 = ax.bar(x - width/2, st_mn_gh["Does Not Meet"], width,label="Does Not Meet")
+    bars2 = ax.bar(x + width/2, st_mn_gh["Meets Standard"], width,label="Meets Standard")
+    ax.bar_label(bars1, fmt="%.0f%%", padding=3)
+    ax.bar_label(bars2, fmt="%.0f%%", padding=3)
+    ax.set_xticks(x)
+    ax.set_xticklabels(mm.index, rotation=45)
+    ax.set_xlabel("Month")
+    ax.set_ylabel("Percentage (%)")
+    ax.set_title("Meeting Minimum Standards by Grade")
+    ax.legend()
+    ax.set_ylim(0, 110)
+    fig.tight_layout()
+    return fig
+    
 
 def standard_graph(df: pd.DataFrame):
     stnd_gph = df_long(df)
@@ -732,9 +751,9 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
         with tab1:
             col1, col2 = st.columns(2)
             with col1:
-                st.dataframe(standard_month(df),width="content",height = "content")
+                st.dataframe(standard_month(df),width="stretch",height = "content")
             with col2:
-                pass
+                st.pyplot(standard_month_gph(df))
         with tab2:
             standards = standard_grade_lf(df)
             col1, col2 = st.columns(2)
