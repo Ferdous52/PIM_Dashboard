@@ -295,6 +295,7 @@ def standard_grade_lf(df: pd.DataFrame) -> pd.DataFrame:
  
 def stnadard_LF_graph(df: pd.DataFrame):
     stnd_LF = standard_grade_lf(df)
+    stnd_LF = stnd_LF.reset_index()
     stnd_LF = stnd_LF.drop(index="Total", errors="ignore")
     fig, ax = plt.subplots(figsize=(9,6))
     bars = ax.bar(stnd_LF.index.astype(str),stnd_LF["Total Standard Meet"], label = "Total Standard Meet", width = 0.55)
@@ -306,6 +307,7 @@ def stnadard_LF_graph(df: pd.DataFrame):
     ax.legend()
     fig.tight_layout()
     return fig
+ 
 def standard_graph(df: pd.DataFrame):
     stnd_gph = df_long(df)
     counts_by_standard = (stnd_gph["Meeting Minimum Standards By Grade?"].value_counts())
