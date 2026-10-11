@@ -318,23 +318,24 @@ def stnadard_LF_graph(df: pd.DataFrame):
     fig.tight_layout()
     return fig
 
-def standard_month(df: pd.DataFrame):
+def standard_month(df: pd.DataFrame) -> pd.DataFrame:
     stnd_month = df_long(df)
     stnd_month = pd.pivot_table(stnd_month,
-                                index = "Month",
+                                index="Month",
                                 values="Project ID",
-                                columns = "Meeting Minimum Standards By Grade?",
+                                columns="Meeting Minimum Standards By Grade?",
                                 aggfunc="count",
                                 margins=True,
                                 margins_name="TOTAL")
-    stnd_month = stnd_month.fillna(0) 
-    stnd_month = stnd_month.rename(columns={0:"Does Not Meet", 1:"Meets Standard"})
-    stnd_month["Does Not Meet"] = ((stnd_month["Does Not Meet"]/stnd_month['TOTAL'])*100).round(0)
-    stnd_month["Meets Standard"] = ((stnd_month['Meets Standard']/stnd_month['TOTAL'])*100).round(0)
-    stnd_month = stnd_month.drop(columns='TOTAL')
-    stnd_month = stnd_month[:-1]
+    stnd_month = stnd_month.fillna(0)
+    stnd_month = stnd_month.rename(columns={0: "Does Not Meet",1: "Meets Standard"})
+    stnd_month["Does Not Meet"] = (stnd_month["Does Not Meet"] / stnd_month["TOTAL"] * 100).round(0)
+    stnd_month["Meets Standard"] = (stnd_month["Meets Standard"] / stnd_month["TOTAL"] * 100).round(0)
+    stnd_month = stnd_month.drop(columns="TOTAL")
+    stnd_month = stnd_month.iloc[:-1]
     stnd_month = stnd_month.reset_index()
-    stnd_month["Month"] = pd.Categorical(stnd_month["Month"], categories=MONTH_ORDER, ordered=True)
+    stnd_month["Month"] = pd.Categorical(stnd_month["Month"],categories=MONTH_ORDER,ordered=True)
+    stnd_month = stnd_month.sort_values("Month")
     stnd_month = stnd_month.set_index("Month")
     return stnd_month
 
