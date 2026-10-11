@@ -329,8 +329,8 @@ def standard_month(df: pd.DataFrame):
                                 margins_name="TOTAL")
     stnd_month = stnd_month.fillna(0) 
     stnd_month = stnd_month.rename(columns={0:"Does Not Meet", 1:"Meets Standard"})
-    stnd_month["Does Not Meet"] = ((mm["Does Not Meet"]/mm['TOTAL'])*100).round(0)
-    stnd_month["Meets Standard"] = ((mm['Meets Standard']/mm['TOTAL'])*100).round(0)
+    stnd_month["Does Not Meet"] = ((stnd_month["Does Not Meet"]/stnd_month['TOTAL'])*100).round(0)
+    stnd_month["Meets Standard"] = ((stnd_month['Meets Standard']/stnd_month['TOTAL'])*100).round(0)
     stnd_month = stnd_month.drop(columns='TOTAL')
     stnd_month = stnd_month[:-1]
     return stnd_month
