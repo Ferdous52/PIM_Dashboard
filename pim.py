@@ -771,7 +771,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
             df.to_excel(writer, index=False, sheet_name="PIM Cleaned")
             long_df.to_excel(writer, index=False, sheet_name="PIM Monthly")
             table_visit(df).to_excel(writer, sheet_name="Visits Summary")
-            standard_grade(df).to_excel(writer, index=False, sheet_name="Standards Summary")
+            standard_grade_lf(df).to_excel(writer, index=False, sheet_name="Standards Summary")
         st.download_button(
             label="Download Excel Report", data=output.getvalue(), file_name="PIM_Report.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
