@@ -308,7 +308,7 @@ def stnadard_LF_graph(df: pd.DataFrame):
     stnd_LF = standard_grade_lf(df)
     stnd_LF = stnd_LF[:-1]
     fig, ax = plt.subplots(figsize=(9,6))
-    bars = ax.bar(stnd_LF.index.astype(str),stnd_LF["Total Standard Meet"], label = "Total Standard Meet", width = 0.55)
+    bars = ax.bar(stnd_LF.index.astype(str),stnd_LF["Total Standard Meet"], label = "Total Standard Meet", width = 0.55,  color="seagreen")
     ax.bar_label(bars, padding = 3, fontsize = 8)
     ax.set_xlabel("staff")
     ax.set_ylabel("Total Standard Meet")
