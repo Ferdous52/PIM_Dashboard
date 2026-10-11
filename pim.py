@@ -341,7 +341,7 @@ def standard_month(df: pd.DataFrame) -> pd.DataFrame:
 
 def standard_month_gph(df: pd.DataFrame):
     st_mn_gh = standard_month(df)
-    x = np.arange(len(mm.index))
+    x = np.arange(len(st_mn_gh.index))
     width = 0.4
     fig, ax = plt.subplots(figsize=(8, 5))
     bars1 = ax.bar(x - width/2, st_mn_gh["Does Not Meet"], width,label="Does Not Meet")
@@ -349,7 +349,7 @@ def standard_month_gph(df: pd.DataFrame):
     ax.bar_label(bars1, fmt="%.0f%%", padding=3)
     ax.bar_label(bars2, fmt="%.0f%%", padding=3)
     ax.set_xticks(x)
-    ax.set_xticklabels(mm.index, rotation=45)
+    ax.set_xticklabels(st_mn_gh.index, rotation=45)
     ax.set_xlabel("Month")
     ax.set_ylabel("Percentage (%)")
     ax.set_title("Meeting Minimum Standards by Grade")
