@@ -299,6 +299,7 @@ def standard_grade(df: pd.DataFrame) -> pd.DataFrame:
     return result
 def stnadard_LF_graph(df: pd.DataFrame):
     stnd_LF = standard_grade(df)
+    stnd_LF = stnd_LF.drop(index="Total", errors="ignore")
     fig, ax = plt.subplots(figsize=(9,6))
     bars = ax.bar(stnd_LF.index.astype(str),stnd_LF["Total Standard Meet"], label = "Total Standard Meet", width = 0.55)
     ax.bar_label(bars, padding = 3, fontsize = 8)
