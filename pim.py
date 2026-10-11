@@ -333,6 +333,7 @@ def standard_month(df: pd.DataFrame):
     stnd_month["Meets Standard"] = ((stnd_month['Meets Standard']/stnd_month['TOTAL'])*100).round(0)
     stnd_month = stnd_month.drop(columns='TOTAL')
     stnd_month = stnd_month[:-1]
+    stnd_month["Month"] = pd.categorical(stnd_month["Month"], categories = MONTH_ORDER, ordered = True)
     return stnd_month
 
 
