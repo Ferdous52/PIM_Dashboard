@@ -335,7 +335,7 @@ def standard_month(df: pd.DataFrame):
     stnd_month = stnd_month[:-1]
     stnd_month = stnd_month.reset_index()
     stnd_month["Month"] = pd.Categorical(stnd_month["Month"], categories=MONTH_ORDER, ordered=True)
-    stnd_month = stnd_month.set_index(stnd_month["Month"])
+    stnd_month = stnd_month.set_index("Month")
     return stnd_month
 
 
