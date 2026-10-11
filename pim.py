@@ -296,7 +296,7 @@ def standard_grade(df: pd.DataFrame) -> pd.DataFrame:
     total.index = ["Total"]
     result = pd.concat([result, total])
     result.index.name = "RtR Staff Name"
-    return result.reset_index()
+    return result
 
 def standard_graph(df: pd.DataFrame):
     stnd_gph = df_long(df)
