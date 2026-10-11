@@ -281,24 +281,20 @@ def create_visit_gap_chart(visit_table: pd.DataFrame):
 # ============================================================
 # 4. STANDARDS ANALYSIS FUNCTIONS
 # ============================================================
-def standard_grade(df: pd.DataFrame) -> pd.DataFrame:
-    standard_cols = [c for c in df.columns if c.startswith(STANDARD_PREFIX)]
-    if not standard_cols:
-        return pd.DataFrame(columns=["RtR Staff Name", "Total Standard Meet_Grade-1", "Total Standard Meet_Grade-2", "Total Standard Meet"])
+def standard_grade_lf(df: pd.DataFrame) -> pd.DataFrame:
+    stnd_grd_lf = df_long(df)
+    stnd_grd_lf = pd.pivot_table(stnd_grd_lf,
+                                 index = "RtR Staff Name",
+                                 values="Meeting Minimum Standards By Grade?",
+                                 columns = "Grade",
+                                 aggfunc="sum",
+                                 margins=True,
+                                 margins_name="Total").astype(int)
+    stnd_grd_lf = stnd_grd_lf.rename(columns={1:"Total Standard Meet_Grade-1", 2: "Total Standard Meet_Grade-2"})
+    return stnd_grd_lf
  
-    frames = []
-    for grade in [1, 2]:
-        part = df[df["Grade"] == grade].groupby("RtR Staff Name")[standard_cols].sum().sum(axis=1)
-        frames.append(part.rename(f"Total Standard Meet_Grade-{grade}"))
-    result = pd.concat(frames, axis=1).fillna(0)
-    result["Total Standard Meet"] = result.sum(axis=1)
-    total = result.sum(numeric_only=True).to_frame().T
-    total.index = ["Total"]
-    result = pd.concat([result, total])
-    result.index.name = "RtR Staff Name"
-    return result
 def stnadard_LF_graph(df: pd.DataFrame):
-    stnd_LF = standard_grade(df)
+    stnd_LF = standard_grade_lf(df)
     stnd_LF = stnd_LF.drop(index="Total", errors="ignore")
     fig, ax = plt.subplots(figsize=(9,6))
     bars = ax.bar(stnd_LF.index.astype(str),stnd_LF["Total Standard Meet"], label = "Total Standard Meet", width = 0.55)
@@ -702,7 +698,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
         with tab1:
             pass
         with tab2:
-            standards = standard_grade(df)
+            standards = standard_grade_lf(df)
             col1, col2 = st.columns(2)
             with col1:
                 st.dataframe(standards, width = "content", height = "content")
