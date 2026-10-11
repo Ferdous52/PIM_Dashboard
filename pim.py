@@ -109,13 +109,24 @@ def data_clean(raw_df: pd.DataFrame) -> pd.DataFrame:
 def df_long(df: pd.DataFrame) -> pd.DataFrame:
     stubs = [STANDARD_PREFIX, VISIT_PREFIX, PRIORITY_STUB]
     id_columns = ["Field Office", "District", "RtR Staff Name", "Project ID", "School Name","Teacher Name", "Year of Support", "Grade", "Class",]
+ 
     missing = [c for c in id_columns if c not in df.columns]
     if missing:
         raise ValueError("Missing required columns for monthly analysis: " + ", ".join(missing))
     available_stubs = [stub for stub in stubs if any(c.startswith(stub + "_") for c in df.columns)]
     if not available_stubs:
         raise ValueError("No monthly visit, standards, or priority columns were found.")
-    return pd.wide_to_long(df.copy(), stubnames=available_stubs, i=id_columns, j="Month", sep="_", suffix="[A-Za-z]+").reset_index()
+
+    df_long = pd.wide_to_long(df.copy(), 
+                              stubnames=available_stubs, 
+                              i=id_columns, 
+                              j="Month", 
+                              sep="_", suffix="[A-Za-z]+").reset_index()
+    visit_column = f"{VISIT_PREFIX}"
+    if visit_column not in df_long.columns:
+        raise ValueError(f"Expected visit column '{visit_column}' was not found.")
+    df_long["Meeting Minimum Standards By Grade?"] = np.where(df_long[visit_column] >= 2,1,0)
+    return df_long
  
  
 def calculate_dashboard_metrics(df: pd.DataFrame) -> dict:
