@@ -297,7 +297,7 @@ def standard_grade(df: pd.DataFrame) -> pd.DataFrame:
     result = pd.concat([result, total])
     result.index.name = "RtR Staff Name"
     return result
-def stnadard_LF_graph():
+def stnadard_LF_graph(df: pd.DataFrame):
     stnd_LF = standard_grade(df)
     fig, ax = plt.subplots(figsize=(9,6))
     bars = ax.bar(stnd_LF.index.astype(str),stnd_LF["Total Standard Meet"], label = "Total Standard Meet", width = 0.55)
@@ -703,7 +703,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
         with col1:
             st.dataframe(standards, width = "content", height = "content")
         with col2:
-            st.pyplot(stnadard_LF_graph())
+            st.pyplot(stnadard_LF_graph(df))
 
 #==============================================================================================================================================================================================
  
