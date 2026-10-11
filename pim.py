@@ -349,7 +349,7 @@ def standard_month_gph(df: pd.DataFrame):
     ax.bar_label(bars1, fmt="%.0f%%", padding=3)
     ax.bar_label(bars2, fmt="%.0f%%", padding=3)
     ax.set_xticks(x)
-    ax.set_xticklabels(st_mn_gh.index, rotation=45)
+    ax.set_xticklabels(st_mn_gh.index)
     ax.set_xlabel("Month")
     ax.set_ylabel("Percentage (%)")
     ax.set_title("Meeting Minimum Standards by Grade")
