@@ -721,7 +721,11 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
         st.subheader("Standards Meet")
         tab1, tab2 = st.tabs(["Standard Meet Monthly", "Standard Meet by Staff"])
         with tab1:
-            st.dataframe(standard_month(df))
+            col1, col2 = st.columns(2)
+            with col1:
+                st.dataframe(standard_month(df),width="content",height = "content")
+            with col2:
+                pass
         with tab2:
             standards = standard_grade_lf(df)
             col1, col2 = st.columns(2)
