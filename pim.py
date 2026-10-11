@@ -19,20 +19,35 @@ PRIORITY_STUB = "Teacher's Priority Area (0, 1, 2, or 3)"
 # Original district/year/grade targets from the supplied application.
 VISIT_TARGET_RULES = {
     ("Jhalakathi", 1, 1): 2,
-    ("Jhalakathi", 2, 1): 2, ("Jhalakathi", 2, 2): 2,
-    ("Jhalakathi", 3, 1): 2, ("Jhalakathi", 3, 2): 2,
-    ("Jhalakathi", 4, 1): 2, ("Jhalakathi", 4, 2): 2,
-    ("Jamalpur", 1, 1): 1, ("Jamalpur", 1, 2): 1,
-    ("Jamalpur", 2, 1): 1, ("Jamalpur", 2, 2): 1,
-    ("Jamalpur", 3, 1): 1, ("Jamalpur", 3, 2): 1,
-    ("Jamalpur", 4, 1): 1, ("Jamalpur", 4, 2): 1,
+    ("Jhalakathi", 2, 1): 2, 
+    ("Jhalakathi", 2, 2): 2,
+    ("Jhalakathi", 3, 1): 2, 
+    ("Jhalakathi", 3, 2): 2,
+    ("Jhalakathi", 4, 1): 2, 
+    ("Jhalakathi", 4, 2): 2,
+    ("Jamalpur", 1, 1): 1, 
+    ("Jamalpur", 1, 2): 1,
+    ("Jamalpur", 2, 1): 1, 
+    ("Jamalpur", 2, 2): 1,
+    ("Jamalpur", 3, 1): 1, 
+    ("Jamalpur", 3, 2): 1,
+    ("Jamalpur", 4, 1): 1, 
+    ("Jamalpur", 4, 2): 1,
     ("Moulvibazar", 1, 1): 2,
-    ("Moulvibazar", 2, 1): 2, ("Moulvibazar", 2, 2): 2,
-    ("Moulvibazar", 3, 1): 1, ("Moulvibazar", 3, 2): 2,
-    ("Moulvibazar", 4, 1): 1, ("Moulvibazar", 4, 2): 1,
-    ("Narail", 1, 1): 1, ("Narail", 1, 2): 1,
-    ("Narail", 2, 1): 1, ("Narail", 2, 2): 1, ("Narail", 2, 3): 1,
-    ("Narail", 3, 1): 1, ("Narail", 3, 2): 1, ("Narail", 3, 3): 1,
+    ("Moulvibazar", 2, 1): 2, 
+    ("Moulvibazar", 2, 2): 2,
+    ("Moulvibazar", 3, 1): 1, 
+    ("Moulvibazar", 3, 2): 2,
+    ("Moulvibazar", 4, 1): 1, 
+    ("Moulvibazar", 4, 2): 1,
+    ("Narail", 1, 1): 1, 
+    ("Narail", 1, 2): 1,
+    ("Narail", 2, 1): 1, 
+    ("Narail", 2, 2): 1, 
+    ("Narail", 2, 3): 1,
+    ("Narail", 3, 1): 1, 
+    ("Narail", 3, 2): 1, 
+    ("Narail", 3, 3): 1,
 }
  
 # ============================================================
@@ -221,34 +236,24 @@ def create_monthly_visit_chart(df: pd.DataFrame):
 # 3. VISITS ANALYSIS FUNCTIONS
 # ============================================================
 def table_visit(df: pd.DataFrame) -> pd.DataFrame:
-    """Create staff-level visit target, actual visits, gap, and school/teacher totals."""
     visit_cols = [c for c in df.columns if c.startswith(VISIT_PREFIX)]
     if not visit_cols:
         raise ValueError("No monthly visit columns were found.")
- 
     staff_summary = df.pivot_table(index="RtR Staff Name", 
                                    values=["Project ID", "Teacher Name"],
                                    aggfunc={"Project ID": "nunique", "Teacher Name": "count"}, fill_value=0).rename(columns={"Project ID": "Total Number of Schools","Teacher Name": "Total Number of Teachers",})
     target_df = df.copy()
-    target_df["target"] = [
-        VISIT_TARGET_RULES.get((district, year, grade), 0)
-        for district, year, grade in zip(target_df["District"], target_df["Year of Support"], target_df["Grade"])
-    ]
+    target_df["target"] = [VISIT_TARGET_RULES.get((district, year, grade), 0) for district, year, grade in zip(target_df["District"], target_df["Year of Support"], target_df["Grade"])]
     target_df["Target_Visit"] = target_df["target"] * len(visit_cols)
     targets = target_df.groupby("RtR Staff Name")["Target_Visit"].sum()
     visited = target_df.groupby("RtR Staff Name")[visit_cols].sum().sum(axis=1).rename("Total_visited")
     result = pd.concat([staff_summary, targets, visited], axis=1).fillna(0)
     result["Gap of Visit"] = result["Target_Visit"] - result["Total_visited"]
- 
     for grade in [1, 2]:
         grade_visits = target_df[target_df["Grade"] == grade].groupby("RtR Staff Name")[visit_cols].sum().sum(axis=1)
         result[f"Visit Grade_{grade}"] = grade_visits
- 
     result = result.fillna(0)
-    result = result[[
-        "Total Number of Schools", "Total Number of Teachers", "Target_Visit", "Total_visited",
-        "Gap of Visit", "Visit Grade_1", "Visit Grade_2",
-    ]]
+    result = result[["Total Number of Schools", "Total Number of Teachers", "Target_Visit", "Total_visited","Gap of Visit", "Visit Grade_1", "Visit Grade_2",]]
     total_row = result.sum(numeric_only=True).to_frame().T
     total_row.index = ["Total"]
     result = pd.concat([result, total_row])
