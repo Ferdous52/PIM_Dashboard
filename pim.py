@@ -750,6 +750,16 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
 #============================================================================================================================================================================================
  
     elif page == "Standards":
+         st.markdown("""<style>
+                       .block-container {padding-top: 0rem;}
+                       .block-container h1,
+                       .block-container h2,
+                       .block-container h3,
+                       .block-container p,
+                       .block-container label,
+                       .block-container span,
+                       .block-container div {color: black !important;}
+                       </style>""", unsafe_allow_html=True)
         st.markdown("""<style>.block-container {padding-top: 0rem;}</style>""", unsafe_allow_html=True)
         st.subheader("Standards Meet")
         tab1, tab2 = st.tabs(["Standard Meet Monthly", "Standard Meet by Staff"])
