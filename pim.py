@@ -723,7 +723,11 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
         st.subheader("Teacher's Priority Area")
         tab1, tab2, tab3 = st.tabs(["Priority by Standard", "Priority by Teacher Monthly", "Priority by School and Staff"])
         with tab1:
-            st.dataframe(stndwisepriority(df), use_container_width=True)
+            col1, col2 = st.columns(2)
+            with col1:
+                st.dataframe(stndwisepriority(df),width="content",height="content")
+            with col2:
+                pass
         with tab2:
             left, right = st.columns(2)
             teacher_table = priority_teacher_table(df)
