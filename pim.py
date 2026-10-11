@@ -297,82 +297,63 @@ def standard_grade(df: pd.DataFrame) -> pd.DataFrame:
     result = pd.concat([result, total])
     result.index.name = "RtR Staff Name"
     return result
-
+def stnadard_LF_graph():
+    stnd_LF = standard_grade(df)
+    fig, ax = plt.subplots(figsize=(9,6))
+    bars = ax.bar(stnd_LF.index.astype(str),stnd_LF["Total Standard Meet"], label = "Total Standard Meet", width = 0.55)
+    ax.bar_label(bars, padding = 3, fontsize = 8)
+    ax.set_xlabel("staff")
+    ax.setylabel("Total Standard Meet")
+    ax.set_title("Staff wise Standard Meet")
+    ax.tick_params(axis = "x", rotation =45)
+    ax.legend()
+    fig.tight_layout()
+    return fig
 def standard_graph(df: pd.DataFrame):
     stnd_gph = df_long(df)
-
-    counts_by_standard = (
-        stnd_gph["Meeting Minimum Standards By Grade?"].value_counts()
-    )
-
+    counts_by_standard = (stnd_gph["Meeting Minimum Standards By Grade?"].value_counts())
     meets = counts_by_standard.get(1, 0)
     does_not_meet = counts_by_standard.get(0, 0)
-
     categories = ["Meets Standards", "Does Not Meet"]
     counts = [meets, does_not_meet]
     total = sum(counts)
-
     if total == 0:
         return None
-
     percentages = [count / total * 100 for count in counts]
-
-    # Modern dark theme
     fig, ax = plt.subplots(figsize=(8, 6))
     fig.patch.set_facecolor("#111827")
     ax.set_facecolor("#1F2937")
-
-    # Bars with contrasting colors
     colors = ["#34D399", "#F87171"]
-
-    bars = ax.bar(
-        categories,
-        percentages,
-        width=0.4,
-        color=colors,
-        edgecolor="#FFFFFF",
-        linewidth=0.8,
-        zorder=3
-    )
-
-    # Percentage labels
-    ax.bar_label(
-        bars,
-        labels=[f"{p:.1f}%" for p in percentages],
-        padding=6,
-        color="white",
-        fontsize=12,
-        fontweight="bold"
-    )
-
-    # Titles and axis labels
-    ax.set_title(
-        "Percentage Meeting Minimum Standards",
-        color="white",
-        fontsize=15,
-        fontweight="bold",
-        pad=20
-    )
-
+    bars = ax.bar(categories,
+                  percentages,
+                  width=0.4,
+                  color=colors,
+                  edgecolor="#FFFFFF",
+                  linewidth=0.8,
+                  zorder=3)
+    ax.bar_label(bars,
+                 labels=[f"{p:.1f}%" for p in percentages],
+                 padding=6,
+                 color="white",
+                 fontsize=12,
+                 fontweight="bold")
+    ax.set_title("Percentage of Meeting Minimum Standards",
+                  color="white",
+                  fontsize=15,
+                  fontweight="bold",
+                  pad=20)
     ax.set_xlabel("Performance Category", color="#D1D5DB", labelpad=10)
     ax.set_ylabel("Percentage (%)", color="#D1D5DB", labelpad=10)
-
-    # Axis and grid styling
     ax.set_ylim(0, 110)
     ax.set_axisbelow(True)
-    ax.grid(
-        axis="y",
-        linestyle="--",
-        color="#374151",
-        alpha=0.8
-    )
-
+    ax.grid(axis="y",
+            linestyle="--",
+            color="#374151",
+            alpha=0.8)
     ax.tick_params(axis="x", colors="#D1D5DB")
     ax.tick_params(axis="y", colors="#D1D5DB")
-
     for spine in ax.spines.values():
         spine.set_visible(False)
-
     fig.tight_layout()
     return fig
 
@@ -703,11 +684,11 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
         left, right = st.columns(2)
         with left:
             fig = create_visit_gap_chart(visit_table)
-            st.pyplot(fig, use_container_width=True)
+            st.pyplot(fig)
             plt.close(fig)
         with right:
             fig = create_visit_distribution_chart(long_df)
-            st.pyplot(fig, use_container_width=True)
+            st.pyplot(fig)
             plt.close(fig)
         st.dataframe(visit_table, use_container_width=True)
 
@@ -722,7 +703,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
         with col1:
             st.dataframe(standards, width = "content", height = "content")
         with col2:
-         pass
+            st.pyplot(stnadard_LF_graph())
 
 #==============================================================================================================================================================================================
  
