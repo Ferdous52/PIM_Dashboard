@@ -289,13 +289,12 @@ def standard_grade_lf(df: pd.DataFrame) -> pd.DataFrame:
                                  columns = "Grade",
                                  aggfunc="sum",
                                  margins=True,
-                                 margins_name="Total").astype(int)
+                                 margins_name="Total Standard Meet").astype(int)
     stnd_grd_lf = stnd_grd_lf.rename(columns={1:"Total Standard Meet_Grade-1", 2: "Total Standard Meet_Grade-2"})
     return stnd_grd_lf
  
 def stnadard_LF_graph(df: pd.DataFrame):
     stnd_LF = standard_grade_lf(df)
-    stnd_LF = stnd_LF.reset_index()
     stnd_LF = stnd_LF.drop(index="Total", errors="ignore")
     fig, ax = plt.subplots(figsize=(9,6))
     bars = ax.bar(stnd_LF.index.astype(str),stnd_LF["Total Standard Meet"], label = "Total Standard Meet", width = 0.55)
