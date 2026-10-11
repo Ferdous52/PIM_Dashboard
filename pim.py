@@ -303,7 +303,7 @@ def stnadard_LF_graph(df: pd.DataFrame):
     bars = ax.bar(stnd_LF.index.astype(str),stnd_LF["Total Standard Meet"], label = "Total Standard Meet", width = 0.55)
     ax.bar_label(bars, padding = 3, fontsize = 8)
     ax.set_xlabel("staff")
-    ax.setylabel("Total Standard Meet")
+    ax.set_ylabel("Total Standard Meet")
     ax.set_title("Staff wise Standard Meet")
     ax.tick_params(axis = "x", rotation =45)
     ax.legend()
