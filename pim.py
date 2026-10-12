@@ -599,7 +599,171 @@ def priority_school_g2(df: pd.DataFrame,long_df: pd.DataFrame) -> pd.DataFrame:
     table.columns.name = None
     table.index.name = "Month"
     return table
+ 
 
+def teacher_priority_heatmap(df: pd.DataFrame, staff_name=None):
+    df = data_clean(df)
+
+    MONTH_ORDER = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ]
+
+    PRIORITY_PREFIX = "Teacher's Priority Area (0, 1, 2, or 3)_"
+
+    # Find existing priority columns
+    priority_cols = {
+        month: f"{PRIORITY_PREFIX}{month}"
+        for month in MONTH_ORDER
+        if f"{PRIORITY_PREFIX}{month}" in df.columns
+    }
+
+    if not priority_cols:
+        print("No priority-area columns found.")
+        return None, None
+
+    # Filter by staff name
+    df_temp = df.copy()
+
+    if staff_name is not None:
+        df_temp = df_temp[
+            df_temp["RtR Staff Name"].eq(staff_name)
+        ].copy()
+
+    if df_temp.empty:
+        print("No records found for this staff member.")
+        return None, None
+
+    # Teacher identifiers
+    id_cols = [
+        col for col in [
+            "RtR Staff Name", "Project ID",
+            "Teacher Name", "Grade"
+        ]
+        if col in df_temp.columns
+    ]
+
+    # Select and rename priority columns
+    heatmap_data = df_temp[
+        id_cols + list(priority_cols.values())
+    ].copy()
+
+    heatmap_data = heatmap_data.rename(
+        columns={col: month for month, col in priority_cols.items()}
+    )
+
+    # Convert priority values to numeric and validate
+    for month in priority_cols:
+        heatmap_data[month] = pd.to_numeric(
+            heatmap_data[month], errors="coerce"
+        )
+
+        heatmap_data.loc[
+            ~heatmap_data[month].isin([0, 1, 2, 3]),
+            month
+        ] = float("nan")
+
+    # Keep months that have valid data
+    available_months = [
+        month for month in MONTH_ORDER
+        if month in heatmap_data.columns
+        and heatmap_data[month].notna().any()
+    ]
+
+    if not available_months:
+        print("No valid priority data found.")
+        return None, None
+
+    heatmap_data = heatmap_data.dropna(
+        subset=available_months, how="all"
+    )
+
+    if heatmap_data.empty:
+        print("No teachers found with valid priority data.")
+        return None, None
+
+    # Sort teachers
+    sort_cols = [
+        col for col in ["Teacher Name", "Project ID", "Grade"]
+        if col in heatmap_data.columns
+    ]
+
+    if sort_cols:
+        heatmap_data = heatmap_data.sort_values(
+            sort_cols, na_position="last"
+        )
+
+    # Build teacher labels
+    if "Teacher Name" in heatmap_data.columns:
+        teacher_labels = (
+            heatmap_data["Teacher Name"]
+            .fillna("Unknown Teacher")
+            .astype(str)
+        )
+
+        if "Project ID" in heatmap_data.columns:
+            teacher_labels += (
+                " | "
+                + heatmap_data["Project ID"].fillna("").astype(str)
+            )
+
+        if "Grade" in heatmap_data.columns:
+            teacher_labels += (
+                " | Grade "
+                + heatmap_data["Grade"].fillna("").astype(str)
+            )
+    else:
+        teacher_labels = pd.Series(
+            [f"Teacher {i + 1}" for i in range(len(heatmap_data))],
+            index=heatmap_data.index
+        )
+
+    plot_data = heatmap_data[available_months].copy()
+    plot_data.index = teacher_labels
+
+    # Priority colors
+    colors = ["#d9eaf7", "#78b7c5", "#f4c36a", "#d95f59"]
+    cmap = ListedColormap(colors)
+    cmap.set_bad("#eeeeee")
+
+    norm = BoundaryNorm(
+        [-0.5, 0.5, 1.5, 2.5, 3.5], cmap.N
+    )
+
+    fig_height = max(5, len(plot_data) * 0.35)
+    fig, ax = plt.subplots(figsize=(12, fig_height))
+
+    sns.heatmap(
+        plot_data,
+        cmap=cmap,
+        norm=norm,
+        mask=plot_data.isna(),
+        linewidths=0.3,
+        linecolor="white",
+        annot=True,
+        fmt=".0f",
+        cbar_kws={
+            "ticks": [0, 1, 2, 3],
+            "label": "Priority Area"
+        },
+        ax=ax
+    )
+
+    title = (
+        f"Teacher Priority Trends — {staff_name}"
+        if staff_name is not None
+        else "Teacher Priority Trends — All Staff"
+    )
+
+    ax.set_title(title, fontsize=14)
+    ax.set_xlabel("Month")
+    ax.set_ylabel("Teacher")
+    ax.tick_params(axis="x", rotation=0)
+    ax.tick_params(axis="y", labelsize=8)
+
+    plt.tight_layout()
+
+    return fig, plot_data
 
 # ============================================================
 # 6. STREAMLIT UI FUNCTIONS
@@ -856,7 +1020,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
             with col1:
                 selected_staff = st.selectbox("Select the Staff Name", sorted(df["RtR Staff Name"].dropna().unique().tolist()))
             with col2:
-                pass
+                st.pyplot(teacher_priority_heatmap(df, staff_name=selected_staff)
 #============================================================================================================================================================================================= 
  
     elif page == "Reports":
