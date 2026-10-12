@@ -851,7 +851,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
             st.dataframe(priority_staff_table(p_long), use_container_width=True)
         with tab5:
             st.markdown("**Each Teachers Priority Monthly trends by staff**")
-            col1, col2 = st.columns([1,4]
+            col1, col2 = st.columns([1,4])
             with col1:
                 st.selectbox("Select the Staff Name", sorted(df["RtR Staff Name"].dropna().unique().tolist()))
             with col2:
