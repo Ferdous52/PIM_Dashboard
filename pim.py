@@ -424,22 +424,26 @@ def priority_long(df: pd.DataFrame) -> pd.DataFrame:
     return pd.wide_to_long(df.copy(), stubnames=available_stubs, i=id_columns, j="Month", sep="_", suffix="[A-Za-z]+").reset_index()
  
 def stndwisepriority(df: pd.DataFrame) -> pd.DataFrame:
-    stnd_long = df_long(df)
-    stnd_long = stnd_long.rename(columns={"Meeting Minimum Standards By Grade?": "Minimum Standard","Teacher's Priority Area (0, 1, 2, or 3)": "Priority Area"})
-    stnd_long = pd.crosstab(index=[stnd_long["Month"], 
-                                   stnd_long["Minimum Standard"]],
-                                   columns=stnd_long["Priority Area"],
-                                   normalize="index").mul(100).round(0)
-    
-    stnd_long = stnd_long.reindex(columns=[0, 1, 2, 3],fill_value=0)
-    stnd_long = stnd_long.rename(columns={0: "Priority_0",1: "Priority_1",2: "Priority_2",3: "Priority_3"})
-    all_combinations = pd.MultiIndex.from_product([MONTH_ORDER, [0, 1]],names=["Month", "Minimum Standard"])
-    stnd_long = stnd_long.reindex(all_combinations)
-    stnd_long = stnd_long.reset_index()
-    stnd_long["Minimum Standard"] = stnd_long["Minimum Standard"].map({0: "No",1: "Yes"})
-    stnd_long["Month"] = pd.Categorical(stnd_long["Month"],categories=MONTH_ORDER,ordered=True)
-    stnd_long = stnd_long.sort_values(["Month", "Minimum Standard"]).reset_index(drop=True)
-    return stnd_long
+    rename_map = {}
+    for col in df.columns:
+        if col.startswith(VISIT_PREFIX):
+            rename_map[col] = col.replace(VISIT_PREFIX, "Visits", 1)
+        elif col.startswith(STANDARD_PREFIX):
+            rename_map[col] = col.replace(STANDARD_PREFIX, "Minimum Standard", 1)
+        elif col.startswith(PRIORITY_PREFIX):
+            rename_map[col] = col.replace(PRIORITY_PREFIX, "PriorityArea", 1)
+    df_temp = df.rename(columns=rename_map)
+    id_cols = [c for c in ["RtR Staff Name", "Project ID", "Teacher Name", "Grade"] if c in df_temp.columns]
+    long_df = pd.wide_to_long(df_temp, stubnames=["Visits", "Minimum Standard", "PriorityArea"],i=id_cols, j="Month", sep="_", suffix="[A-Za-z]+").reset_index()
+    long_df["PriorityArea"] = pd.to_numeric(long_df["PriorityArea"], errors="coerce").astype("Int64")
+    long_df["Month"] = pd.Categorical(long_df["Month"], categories=MONTH_ORDER, ordered=True)
+    long_df["Minimum Standard"] = long_df["Minimum Standard"].map({0: "No", 1: "Yes"})
+    long_df["Minimum Standard"] = pd.Categorical(long_df["Minimum Standard"], categories=["Yes", "No"], ordered=True)
+    result = pd.crosstab(index=[long_df["Month"], long_df["Minimum Standard"]],columns=long_df["PriorityArea"], normalize="index").mul(100).round(1)
+    result = result.reindex(columns=[0, 1, 2, 3], fill_value=0)
+    result.columns = [f"Priority_{c}" for c in result.columns]
+    result.columns.name = None
+    return result
  
  
 def priority_teacher_table(df: pd.DataFrame) -> pd.DataFrame:
