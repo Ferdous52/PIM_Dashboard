@@ -817,7 +817,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                        .block-container div {color: black !important;}
                        </style>""", unsafe_allow_html=True)
         st.subheader("Teacher's Priority Area")
-        tab1, tab2, tab3 = st.tabs(["Priority by Standard", "Priority by Teacher Monthly", "Priority by School and Staff"])
+        tab1, tab2, tab3, tab4 = st.tabs(["Priority by Standard", "Priority by Monthly", "Priority by School" "Priority by Staff"])
         with tab1:
             st.markdown("Teacher Priority Areas by Month and Minimum Standards Status")
             col1, col2 = st.columns([1,2])
@@ -844,7 +844,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
             with right:
                 st.markdown("**Percentage of schools in each teacher priority area by month : Grade-2**")
                 st.dataframe(priority_school_g2(df, p_long))
-     
+        with tab4: 
             st.markdown("**Percentage of schools handled by staff in each priority area**")
             st.dataframe(priority_staff_table(p_long), use_container_width=True)
 #============================================================================================================================================================================================= 
