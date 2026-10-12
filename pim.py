@@ -450,7 +450,7 @@ def plot_stnd_priority_heatmap(df):
     result = stndwisepriority(df).reset_index()
     priority_cols = ["Priority_0", "Priority_1","Priority_2", "Priority_3"]
     available_months = [month for month in MONTH_ORDER if month in result["Month"].astype(str).unique()]
-    fig, axes = plt.subplots(1, 2, figsize=(14, 8), sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=(14, 7), sharey=True)
     for ax, status in zip(axes, ["Yes", "No"]):
         subset = result[result["Minimum Standard"] == status].copy()
         heatmap_data = (subset.set_index("Month")[priority_cols].reindex(available_months))
