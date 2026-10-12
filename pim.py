@@ -1025,7 +1025,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
             with col1:
                 selected_staff = st.selectbox("Select the Staff Name", sorted(df["RtR Staff Name"].dropna().unique().tolist()))
             with col2:
-                st.pyplot(teacher_priority_heatmap(df, staff_name= selected_staff)
+                st.pyplot(teacher_priority_heatmap(df, staff_name= selected_staff))
 #============================================================================================================================================================================================= 
  
     elif page == "Reports":
