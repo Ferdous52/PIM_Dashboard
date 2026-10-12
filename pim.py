@@ -6,6 +6,7 @@ from io import BytesIO
 import numpy as np 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
+from matplotlib.colors import ListedColormap, BoundaryNorm
 import seaborn as sns
 import pandas as pd
 import plotly.express as px
