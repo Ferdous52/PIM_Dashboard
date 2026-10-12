@@ -446,7 +446,33 @@ def stndwisepriority(df: pd.DataFrame) -> pd.DataFrame:
     result.columns.name = None
     return result
  
- 
+def plot_stnd_priority_heatmap(df):
+    result = stndwisepriority(df).reset_index()
+    priority_cols = ["Priority_0", "Priority_1","Priority_2", "Priority_3"]
+    available_months = [month for month in MONTH_ORDER if month in result["Month"].astype(str).unique()]
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6), sharey=True)
+    for ax, status in zip(axes, ["Yes", "No"]):
+        subset = result[result["Minimum Standard"] == status].copy()
+        heatmap_data = (subset.set_index("Month")[priority_cols].reindex(available_months))
+        sns.heatmap(heatmap_data,
+                    annot=True,
+                    fmt=".1f",
+                    cmap="YlGnBu",
+                    vmin=0,
+                    vmax=100,
+                    linewidths=0.5,
+                    linecolor="white",
+                    cbar_kws={"label": "Percentage (%)"},
+                    ax=ax)
+        ax.set_title(f"Minimum Standards: {status}")
+        ax.set_xlabel("Teacher's Priority Area")
+        ax.set_ylabel("Month" if status == "Yes" else "")
+        ax.set_xticklabels(["Priority 0", "Priority 1","Priority 2", "Priority 3"],rotation=30,ha="right")
+    fig.suptitle("Monthly Distribution of Teacher Priority Areas ""by Minimum Standards Status",fontsize=14)
+    fig.tight_layout()
+    return fig
+
+
 def priority_teacher_table(df: pd.DataFrame) -> pd.DataFrame:
     id_cols = ["Field Office", "District", "RtR Staff Name", "School Name", "Teacher Name","Year of Support", "Grade",]
     long_df = pd.wide_to_long(df.copy(), stubnames=PRIORITY_STUB, i=id_cols, j="Month", sep="_", suffix=r"\w+").reset_index()
@@ -793,11 +819,11 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
         st.subheader("Teacher's Priority Area")
         tab1, tab2, tab3 = st.tabs(["Priority by Standard", "Priority by Teacher Monthly", "Priority by School and Staff"])
         with tab1:
-            col1, col2 = st.columns(2)
+            col1, col2 = st.columns([1,2])
             with col1:
                 st.dataframe(stndwisepriority(df),width="content",height="content")
             with col2:
-                pass
+                st.pyplot(plot_stnd_priority_heatmap(df))
         with tab2:
             left, right = st.columns(2)
             teacher_table = priority_teacher_table(df)
