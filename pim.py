@@ -599,7 +599,7 @@ def priority_school_g2(df: pd.DataFrame,long_df: pd.DataFrame) -> pd.DataFrame:
     table.index.name = "Month"
     return table
 
- def teacher_priority_heatmap(df, staff_name=None):
+def teacher_priority_heatmap(df, staff_name=None):
 
     MONTH_ORDER = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"]
 
