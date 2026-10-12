@@ -440,7 +440,7 @@ def stndwisepriority(df: pd.DataFrame) -> pd.DataFrame:
     long_df["Month"] = pd.Categorical(long_df["Month"], categories=MONTH_ORDER, ordered=True)
     long_df["Minimum Standard"] = long_df["Minimum Standard"].map({0: "No", 1: "Yes"})
     long_df["Minimum Standard"] = pd.Categorical(long_df["Minimum Standard"], categories=["Yes", "No"], ordered=True)
-    result = pd.crosstab(index=[long_df["Month"], long_df["Minimum Standard"]],columns=long_df["PriorityArea"], normalize="index").mul(100).round(1)
+    result = pd.crosstab(index=[long_df["Month"], long_df["Minimum Standard"]],columns=long_df["PriorityArea"], normalize="index").mul(100).round(0).astype(int)
     result = result.reindex(columns=[0, 1, 2, 3], fill_value=0)
     result.columns = [f"Priority_{c}" for c in result.columns]
     result.columns.name = None
