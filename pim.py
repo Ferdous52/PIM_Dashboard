@@ -551,8 +551,10 @@ def create_priority_chart(priority_table: pd.DataFrame):
  
 def priority_staff_table(long_df: pd.DataFrame) -> pd.DataFrame:
     col = PRIORITY_STUB
-    table = pd.pivot_table(
-        long_df, index="RtR Staff Name", values="School Name", columns=col,
+    table = pd.pivot_table(long_df, 
+                           index="RtR Staff Name", 
+                           values="Teacher Name", 
+                           columns=col,
         aggfunc="nunique", fill_value=0
     ).reindex(columns=[0, 1, 2, 3], fill_value=0)
     table = table.div(table.sum(axis=1).replace(0, 1), axis=0).mul(100)
@@ -566,7 +568,7 @@ def priority_school_g1(df: pd.DataFrame,long_df: pd.DataFrame) -> pd.DataFrame:
     grade1 = long_df[long_df["Grade"] == 1]
     table = pd.pivot_table(grade1,
                            index="Month",
-                           values="Project ID",
+                           values="Teacher Name",
                            columns=col,
                            aggfunc="count",
                            fill_value=0,
@@ -584,7 +586,7 @@ def priority_school_g2(df: pd.DataFrame,long_df: pd.DataFrame) -> pd.DataFrame:
     grade2 = long_df[long_df["Grade"] == 2]
     table = pd.pivot_table(grade2,
                            index="Month",
-                           values="Project ID",
+                           values="Teacher Name",
                            columns=col,
                            aggfunc="count",
                            fill_value=0,
