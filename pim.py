@@ -602,9 +602,20 @@ def priority_school_g2(df: pd.DataFrame,long_df: pd.DataFrame) -> pd.DataFrame:
  
 
 def teacher_priority_heatmap(df: pd.DataFrame, staff_name=None):
-    MONTH_ORDER = ["Jan", "Feb", "Mar", "Apr", "May", "Jun","Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    MONTH_ORDER = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ]
+
     PRIORITY_PREFIX = "Teacher's Priority Area (0, 1, 2, or 3)_"
-    priority_cols = {month: f"{PRIORITY_PREFIX}{month}"for month in MONTH_ORDERif f"{PRIORITY_PREFIX}{month}" in df.columns}
+
+    # Find existing priority columns
+    priority_cols = {
+        month: f"{PRIORITY_PREFIX}{month}"
+        for month in MONTH_ORDER
+        if f"{PRIORITY_PREFIX}{month}" in df.columns
+    }
+
     if not priority_cols:
         print("No priority-area columns found.")
         return None, None
