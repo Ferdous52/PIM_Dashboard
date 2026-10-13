@@ -133,7 +133,7 @@ def df_long(df: pd.DataFrame) -> pd.DataFrame:
     available_stubs = [stub for stub in stubs if any(c.startswith(stub + "_") for c in df.columns)]
     if not available_stubs:
         raise ValueError("No monthly visit, standards, or priority columns were found.")
-
+ 
     df_long = pd.wide_to_long(df.copy(), 
                               stubnames=available_stubs, 
                               i=id_columns, 
@@ -142,9 +142,19 @@ def df_long(df: pd.DataFrame) -> pd.DataFrame:
     visit_column = f"{VISIT_PREFIX}"
     if visit_column not in df_long.columns:
         raise ValueError(f"Expected visit column '{visit_column}' was not found.")
-    df_long["Meeting Minimum Standards By Grade?"] = np.where(df_long[visit_column] >= 2,1,0)
+    # Preserve the actual monthly standards values when present. Only use the
+    # visit-count rule as a fallback when the workbook has no standards columns.
+    standards_column = STANDARD_PREFIX
+    if standards_column not in df_long.columns:
+        df_long[standards_column] = np.where(
+            pd.to_numeric(df_long[visit_column], errors="coerce") >= 2, 1, 0
+        )
+    else:
+        df_long[standards_column] = pd.to_numeric(
+            df_long[standards_column], errors="coerce"
+        )
     return df_long
-
+ 
 #========================================================================================================================================================
 #========================================================================================================================================================
  
@@ -154,7 +164,7 @@ def calculate_dashboard_metrics(df: pd.DataFrame) -> dict:
     priority_cols = [c for c in df.columns if c.startswith(PRIORITY_PREFIX)]
     return {
         "total_staff": df["RtR Staff Name"].nunique() if "RtR Staff Name" in df else 0,
-        "total_schools": df["Project ID"].nunique() if "School Name" in df else 0,
+        "total_schools": df["School Name"].nunique() if "School Name" in df else 0,
         "total_teachers": df["Teacher Name"].nunique() if "Teacher Name" in df else 0,
         "total_visits": float(df[visit_cols].sum().sum()) if visit_cols else 0,
         "standard_rate": float(df[standard_cols].mean().mean() * 100) if standard_cols else 0,
@@ -178,7 +188,7 @@ def create_monthly_visit_chart(df: pd.DataFrame):
     # Modern dark theme
     fig.patch.set_facecolor("#111827")
     ax.set_facecolor("#1F2937")
-
+ 
     # Line chart
     ax.plot(
         monthly["Month"],
@@ -192,7 +202,7 @@ def create_monthly_visit_chart(df: pd.DataFrame):
         markeredgewidth=2,
         zorder=3
     )
-
+ 
     # Add value labels
     for x, y in zip(monthly["Month"], monthly["Total_Visit"]):
         ax.annotate(
@@ -205,7 +215,7 @@ def create_monthly_visit_chart(df: pd.DataFrame):
             fontsize=10,
             fontweight="bold"
         )
-
+ 
     # Titles and axis labels
     ax.set_title(
         "Monthly Total Visits",
@@ -216,7 +226,7 @@ def create_monthly_visit_chart(df: pd.DataFrame):
     )
     ax.set_xlabel("Month", color="#D1D5DB", labelpad=10)
     ax.set_ylabel("Total Visits", color="#D1D5DB", labelpad=10)
-
+ 
     # Grid and axis styling
     ax.set_ylim(bottom=0)
     ax.grid(
@@ -228,11 +238,11 @@ def create_monthly_visit_chart(df: pd.DataFrame):
     ax.set_axisbelow(True)
     ax.tick_params(axis="x", colors="#D1D5DB")
     ax.tick_params(axis="y", colors="#D1D5DB")
-
+ 
     # Remove borders
     for spine in ax.spines.values():
         spine.set_visible(False)
-
+ 
     fig.tight_layout()
     return fig
  
@@ -326,18 +336,25 @@ def stnadard_LF_graph(df: pd.DataFrame):
     ax.legend()
     fig.tight_layout()
     return fig
-
+ 
 def standard_month(df: pd.DataFrame) -> pd.DataFrame:
     stnd_month = df_long(df)
-    stnd_month = pd.pivot_table(stnd_month,
-                                index="Month",
-                                values="Project ID",
-                                columns="Meeting Minimum Standards By Grade?",
-                                aggfunc="count",
-                                margins=True,
-                                margins_name="TOTAL")
+    stnd_month = pd.pivot_table(
+        stnd_month,
+        index="Month",
+        values="Project ID",
+        columns="Meeting Minimum Standards By Grade?",
+        aggfunc="count",
+        margins=True,
+        margins_name="TOTAL",
+    )
+    # Ensure both status columns exist even if the selected data contains
+    # only "meets" or only "does not meet" observations.
+    for status in [0, 1]:
+        if status not in stnd_month.columns:
+            stnd_month[status] = 0
     stnd_month = stnd_month.fillna(0)
-    stnd_month = stnd_month.rename(columns={0: "Does Not Meet",1: "Meets Standard"})
+    stnd_month = stnd_month.rename(columns={0: "Does Not Meet", 1: "Meets Standard"})
     stnd_month["Does Not Meet"] = (stnd_month["Does Not Meet"] / stnd_month["TOTAL"] * 100).round(0)
     stnd_month["Meets Standard"] = (stnd_month["Meets Standard"] / stnd_month["TOTAL"] * 100).round(0)
     stnd_month = stnd_month.drop(columns="TOTAL")
@@ -347,7 +364,7 @@ def standard_month(df: pd.DataFrame) -> pd.DataFrame:
     stnd_month = stnd_month.sort_values("Month")
     stnd_month = stnd_month.set_index("Month")
     return stnd_month
-
+ 
 def standard_month_gph(df: pd.DataFrame):
     st_mn_gh = standard_month(df)
     x = np.arange(len(st_mn_gh.index))
@@ -367,7 +384,7 @@ def standard_month_gph(df: pd.DataFrame):
     fig.tight_layout()
     return fig
     
-
+ 
 def standard_graph(df: pd.DataFrame):
     stnd_gph = df_long(df)
     counts_by_standard = (stnd_gph["Meeting Minimum Standards By Grade?"].value_counts())
@@ -415,7 +432,7 @@ def standard_graph(df: pd.DataFrame):
         spine.set_visible(False)
     fig.tight_layout()
     return fig
-
+ 
  
 # ============================================================
 # 5. PRIORITY ANALYSIS FUNCTIONS
@@ -474,20 +491,37 @@ def plot_stnd_priority_heatmap(df):
     fig.suptitle("Monthly Distribution of Teacher Priority Areas ""by Minimum Standards Status",fontsize=14)
     fig.tight_layout()
     return fig
-
-
+ 
+ 
 def priority_teacher_table(df: pd.DataFrame) -> pd.DataFrame:
-    id_cols = ["Field Office", "District", "RtR Staff Name", "School Name", "Teacher Name","Year of Support", "Grade",]
-    long_df = pd.wide_to_long(df.copy(), stubnames=PRIORITY_STUB, i=id_cols, j="Month", sep="_", suffix=r"\w+").reset_index()
-    long_df["Month"] = pd.Categorical(long_df["Month"], categories=MONTH_ORDER, ordered=True)
-    table = pd.pivot_table(long_df, 
-                           index="Month", 
-                           values="Teacher Name", 
-                           columns=PRIORITY_STUB,
-                           aggfunc="count", 
-                           observed=False).reindex(columns=[0, 1, 2, 3], fill_value=0)
-    denominator = max(df["Teacher Name"].count(), 1)
-    table = (table / denominator * 100).round(0)
+    id_cols = [
+        "Field Office", "District", "RtR Staff Name", "School Name",
+        "Teacher Name", "Year of Support", "Grade",
+    ]
+    missing = [col for col in id_cols if col not in df.columns]
+    if missing:
+        raise ValueError("Missing required columns for priority analysis: " + ", ".join(missing))
+ 
+    priority_month_cols = [
+        col for col in df.columns if col.startswith(PRIORITY_STUB + "_")
+    ]
+    if not priority_month_cols:
+        return pd.DataFrame(columns=[f"Priority_{i}" for i in range(4)])
+ 
+    long_df = pd.wide_to_long(
+        df.copy(), stubnames=PRIORITY_STUB, i=id_cols,
+        j="Month", sep="_", suffix=r"\w+"
+    ).reset_index()
+    long_df["Month"] = pd.Categorical(
+        long_df["Month"], categories=MONTH_ORDER, ordered=True
+    )
+    long_df[PRIORITY_STUB] = pd.to_numeric(long_df[PRIORITY_STUB], errors="coerce")
+    long_df = long_df[long_df[PRIORITY_STUB].isin([0, 1, 2, 3])]
+ 
+    table = pd.crosstab(
+        long_df["Month"], long_df[PRIORITY_STUB], normalize="index"
+    ).mul(100).round(0)
+    table = table.reindex(index=MONTH_ORDER, columns=[0, 1, 2, 3], fill_value=0)
     table.columns = [f"Priority_{int(c)}" for c in table.columns]
     table = table.loc[table.sum(axis=1) > 0]
     table = table.map(lambda value: f"{value:.0f}%")
@@ -497,18 +531,18 @@ def priority_teacher_table(df: pd.DataFrame) -> pd.DataFrame:
 def create_priority_chart(priority_table: pd.DataFrame):
     chart_df = priority_table.copy()
     priority_cols = [f"Priority_{i}" for i in range(4)]
-
+ 
     for col in priority_cols:
         if col not in chart_df:
             chart_df[col] = 0
-
+ 
         chart_df[col] = pd.to_numeric(chart_df[col].astype(str).str.replace("%", "", regex=False),errors="coerce")
-
+ 
     fig, ax = plt.subplots(figsize=(8, 6))
     fig.patch.set_facecolor("#111827")
     ax.set_facecolor("#1F2937")
     colors = ["#38BDF8", "#A78BFA", "#34D399", "#FBBF24"]
-
+ 
     for col, color in zip(priority_cols, colors):
         ax.plot(
             chart_df["Month"] if "Month" in chart_df.columns
@@ -523,27 +557,27 @@ def create_priority_chart(priority_table: pd.DataFrame):
             markeredgecolor=color,
             markeredgewidth=1.5
         )
-
+ 
     ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=100))
     ax.set_xlabel("Month", color="#D1D5DB", labelpad=10)
     ax.set_ylabel("Teachers (%)", color="#D1D5DB", labelpad=10)
-
+ 
     ax.set_title("Priority Areas by Month",
                  color="white",
                  fontsize=16,
                  fontweight="bold",pad=20
     )
-
+ 
     ax.set_ylim(0, 100)
     ax.grid(axis="y",
             linestyle="--",color="#374151",alpha=0.8)
     ax.set_axisbelow(True)
     ax.tick_params(axis="x", colors="#D1D5DB")
     ax.tick_params(axis="y", colors="#D1D5DB")
-
+ 
     for spine in ax.spines.values():
         spine.set_visible(False)
-
+ 
     legend = ax.legend(title="Priority Area",
                        facecolor="#1F2937",
                        edgecolor="#374151",
@@ -583,7 +617,7 @@ def priority_school_g1(df: pd.DataFrame,long_df: pd.DataFrame) -> pd.DataFrame:
     table.columns.name = None
     table.index.name = "Month"
     return table
-
+ 
 def priority_school_g2(df: pd.DataFrame,long_df: pd.DataFrame) -> pd.DataFrame:
     col = PRIORITY_STUB
     grade2 = long_df[long_df["Grade"] == 2]
@@ -602,7 +636,7 @@ def priority_school_g2(df: pd.DataFrame,long_df: pd.DataFrame) -> pd.DataFrame:
     table.index.name = "Month"
     return table
  
-
+ 
 def teacher_priority_heatmap(df: pd.DataFrame, staff_name=None):
     months = MONTH_ORDER
     priority_prefix = PRIORITY_STUB + "_"
@@ -610,37 +644,37 @@ def teacher_priority_heatmap(df: pd.DataFrame, staff_name=None):
     if not priority_cols:
         return None, None
     df_temp = df.copy()
-
+ 
     if staff_name is not None:
         df_temp = df_temp[df_temp["RtR Staff Name"].eq(staff_name)].copy()
     if df_temp.empty:
         return None, None
     id_cols = [col for col in ["RtR Staff Name","Project ID","School Name","Teacher Name","Grade","Class",] if col in df_temp.columns]
-
+ 
     heatmap_data = df_temp[id_cols + list(priority_cols.values())].copy()
     heatmap_data = heatmap_data.rename(columns={col: month for month, col in priority_cols.items()})
     for month in priority_cols:
         heatmap_data[month] = pd.to_numeric(heatmap_data[month], errors="coerce")
         heatmap_data.loc[~heatmap_data[month].isin([0, 1, 2, 3]),month] = float("nan")
-
+ 
     available_months = [month for month in months if month in heatmap_data.columns and heatmap_data[month].notna().any()]
  
     if not available_months:
         return None, None
-
+ 
     heatmap_data = heatmap_data.dropna(subset=available_months, how="all")
-
+ 
     if heatmap_data.empty:
         return None, None
-
+ 
     sort_cols = [col for col in ["Teacher Name", "Project ID", "Grade"] if col in heatmap_data.columns]
-
+ 
     if sort_cols:
         heatmap_data = heatmap_data.sort_values(sort_cols, na_position="last")
-
+ 
     if "Teacher Name" in heatmap_data.columns:
         labels = (heatmap_data["Teacher Name"].fillna("Unknown Teacher").astype(str))
-
+ 
         if "School Name" in heatmap_data.columns:
             labels += (" | " + heatmap_data["School Name"].fillna("").astype(str))
         if "Grade" in heatmap_data.columns:
@@ -649,13 +683,13 @@ def teacher_priority_heatmap(df: pd.DataFrame, staff_name=None):
             labels += (" | Class "+ heatmap_data["Class"].fillna("").astype(str))
     else:
         labels = pd.Series([f"Teacher {i + 1}" for i in range(len(heatmap_data))],index=heatmap_data.index,)
-
+ 
     plot_data = heatmap_data[available_months].copy()
     plot_data.index = labels
     colors = ["#d9eaf7","#78b7c5","#f4c36a","#d95f59",]
     cmap = ListedColormap(colors)
     cmap.set_bad("#eeeeee")
-
+ 
     norm = BoundaryNorm([-0.5, 0.5, 1.5, 2.5, 3.5],cmap.N,)
     fig_height = max(5, len(plot_data) * 0.35)
     fig, ax = plt.subplots(figsize=(12, fig_height))
@@ -671,9 +705,9 @@ def teacher_priority_heatmap(df: pd.DataFrame, staff_name=None):
         linecolor="white",
         cbar_kws={"ticks": [0, 1, 2, 3],"label": "Priority Area",},
         ax=ax,)
-
+ 
     title = (f"Teacher Priority Trends — {staff_name}" if staff_name is not None else "Teacher Priority — All Staff")
-
+ 
     ax.set_title(title, fontsize=14)
     ax.set_xlabel("Month")
     ax.set_ylabel("Teacher / School / Grade / Class")
@@ -681,8 +715,8 @@ def teacher_priority_heatmap(df: pd.DataFrame, staff_name=None):
     ax.tick_params(axis="y", labelsize=8)
     fig.tight_layout()
     return fig, plot_data
-
-
+ 
+ 
 # ============================================================
 # 6. STREAMLIT UI FUNCTIONS
 # ============================================================
@@ -749,6 +783,7 @@ def upload_page():
         uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx", "xls"], help="Upload your PIM Excel dataset.")
         if uploaded_file is not None:
             try:
+                uploaded_file.seek(0)
                 excel_file = pd.ExcelFile(uploaded_file)
                 sheet_names = excel_file.sheet_names
                 selected_sheet = st.selectbox("Select Worksheet", sheet_names)
@@ -772,194 +807,295 @@ def upload_page():
  
  
 def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
+    """Interactive dashboard with stable chart dimensions and global filters."""
     st.markdown("""
     <style>
-    .stApp {background:#F4F9F5!important;}
-    [data-testid="stMetric"] {background:#0F172A;padding:18px;border-radius:12px;border:1px solid #E2E8F0;box-shadow:0 2px 8px rgba(0,0,0,.08);}
-    [data-testid="stMetricLabel"] {color:#CBD5E1!important;}
-    [data-testid="stMetricValue"] {color:#FFFFFF!important;}
+      .stApp { background: #F4F7FB; }
+      .main .block-container { max-width: 1600px; padding: 1.25rem 1.5rem 2rem; }
+      [data-testid="stMetric"] {
+        background: #0F172A; padding: 16px 18px; border-radius: 14px;
+        border: 1px solid #243247; box-shadow: 0 4px 14px rgba(15,23,42,.10);
+        min-height: 112px;
+      }
+      [data-testid="stMetricLabel"] { color: #CBD5E1 !important; }
+      [data-testid="stMetricValue"] { color: #FFFFFF !important; }
+      [data-testid="stMetricDelta"] { color: #A7F3D0 !important; }
+      [data-testid="stSidebar"] { background: #0F172A; }
+      [data-testid="stSidebar"] * { color: #F8FAFC; }
+      div[data-testid="stPlotlyChart"] { border-radius: 12px; overflow: hidden; }
+      div[data-testid="stDataFrame"] { border-radius: 10px; }
+      .pim-section { font-size: 1.08rem; font-weight: 700; color: #0F172A; margin: .4rem 0 .8rem; }
+      @media (max-width: 900px) {
+        .main .block-container { padding: .8rem .65rem 1.5rem; }
+      }
     </style>
     """, unsafe_allow_html=True)
+ 
+    # Widget callbacks run before Streamlit redraws the page, so reset/logout can
+    # safely clear widget state without causing a StreamlitAPIException.
+    def _reset_pim_filters():
+        st.session_state["pim_district"] = "All districts"
+        st.session_state["pim_staff_filter"] = "All staff"
+        st.session_state["pim_year"] = "All years"
+ 
+    def _logout_pim():
+        st.session_state.logged_in = False
+        st.session_state.page = "login"
+        st.session_state.df = None
+        st.session_state.selected_sheet = None
+        for key in ["pim_navigation", "pim_district", "pim_staff_filter", "pim_year"]:
+            st.session_state.pop(key, None)
+ 
+    # Navigation and filters live in the sidebar. Widget keys preserve selection
+    # across Streamlit reruns and avoid accidentally resetting the page.
     with st.sidebar:
-        st.markdown('<div style="font-size:24px;font-weight:700;margin-bottom:20px;">PIM Dashboard</div>', unsafe_allow_html=True)
-        st.markdown("---")
-        page = st.radio("Navigation", ["Home", "Visits", "Standards", "Priority", "Reports"])
-        st.markdown("---")
-        st.caption(f"Worksheet: {st.session_state.selected_sheet}")
-        st.markdown("---")
-        if st.button("📂 Change Data", use_container_width=True):
+        st.markdown("<div style='font-size:25px;font-weight:800; padding:4px 0 12px'>📊 PIM Dashboard</div>", unsafe_allow_html=True)
+        st.caption(f"Workbook: {st.session_state.get('selected_sheet') or 'Uploaded data'}")
+        page = st.radio(
+            "Navigation", ["Home", "Visits", "Standards", "Priority", "Reports"],
+            key="pim_navigation", label_visibility="visible"
+        )
+        st.divider()
+        st.markdown("**Dashboard filters**")
+        filtered_df = df.copy()
+        if "District" in filtered_df.columns:
+            districts = sorted(filtered_df["District"].dropna().astype(str).unique().tolist())
+            selected_district = st.selectbox("District", ["All districts"] + districts, key="pim_district")
+            if selected_district != "All districts":
+                filtered_df = filtered_df[filtered_df["District"].astype(str) == selected_district]
+        if "RtR Staff Name" in filtered_df.columns:
+            staff_names = sorted(filtered_df["RtR Staff Name"].dropna().astype(str).unique().tolist())
+            selected_staff_filter = st.selectbox("Staff member", ["All staff"] + staff_names, key="pim_staff_filter")
+            if selected_staff_filter != "All staff":
+                filtered_df = filtered_df[filtered_df["RtR Staff Name"].astype(str) == selected_staff_filter]
+        if "Year of Support" in filtered_df.columns:
+            years = sorted(filtered_df["Year of Support"].dropna().unique().tolist())
+            if years:
+                selected_year = st.selectbox("Support year", ["All years"] + years, key="pim_year")
+                if selected_year != "All years":
+                    filtered_df = filtered_df[filtered_df["Year of Support"] == selected_year]
+        st.caption(f"Showing {len(filtered_df):,} records")
+        st.divider()
+        if st.button("📂 Change Data", use_container_width=True, key="pim_change_data"):
             st.session_state.page = "upload"
             st.rerun()
-        if st.button("🚪 Logout", use_container_width=True):
-            st.session_state.logged_in = False
-            st.session_state.page = "login"
-            st.session_state.df = None
-            st.session_state.selected_sheet = None
-            st.rerun()
-
-#==============================================================================================================================================================================================
-    st.markdown("""<style>h1, h2, h3 {color: black !important;}</style>""", unsafe_allow_html=True)
-    
+        st.button("↻ Reset filters", use_container_width=True, key="pim_reset_filters", on_click=_reset_pim_filters)
+        st.button("🚪 Logout", use_container_width=True, key="pim_logout", on_click=_logout_pim)
+ 
+    if filtered_df.empty:
+        st.warning("No records match the selected filters. Reset the filters or choose another option.")
+        return
+ 
+    # Recompute everything from the filtered records so the whole dashboard
+    # responds consistently to filter changes.
+    metrics = calculate_dashboard_metrics(filtered_df)
+    try:
+        filtered_long_df = df_long(filtered_df)
+    except Exception:
+        filtered_long_df = long_df.copy()
+ 
     if page == "Home":
-        st.markdown("""<style>.block-container {padding-top: .5rem;}</style>""", unsafe_allow_html=True)
-        cols = st.columns(6)
-        labels = [
-            ("Total Staff", metrics["total_staff"]),
-            ("Total Schools", metrics["total_schools"]),
-            ("Total Teachers", metrics["total_teachers"]),
-            ("Total School Visits", f'{metrics["total_visits"]:,.0f}'),
-            ("Standards Met", f'{metrics["standard_rate"]:.1f}%'),
-            ("Average Priority Score", f'{metrics["avg_priority"]:.2f}'),
+        st.title("PIM Overview")
+        st.caption("Project Implementation Monitoring · Interactive overview")
+        metric_values = [
+            ("Total Staff", f"{metrics['total_staff']:,}"),
+            ("Total Schools", f"{metrics['total_schools']:,}"),
+            ("Total Teachers", f"{metrics['total_teachers']:,}"),
+            ("Total School Visits", f"{metrics['total_visits']:,.0f}"),
+            ("Standards Met", f"{metrics['standard_rate']:.1f}%"),
+            ("Average Priority Score", f"{metrics['avg_priority']:.2f}"),
         ]
-        for col, (label, value) in zip(cols, labels):
-            col.metric(label, value)
-         
-        col1, col2, col3= st.columns(3)
-        
-        with col1:
-         fig = create_monthly_visit_chart(df)
-         st.pyplot(fig, use_container_width=True)
-         plt.close(fig)
-        
-        with col2:
-         fig = standard_graph(df)
-         st.pyplot(fig, use_container_width=True)
-         plt.close(fig)
-         
-        with col3:
-         teacher_table = priority_teacher_table(df)
-         fig = create_priority_chart(teacher_table)
-         st.pyplot(fig, use_container_width=True)
-         plt.close(fig)
-         
-#==========================================================================================================================================================================================
-
-    elif page == "Visits":
-        st.markdown("""<style>.block-container {padding-top: 0rem;}</style>""", unsafe_allow_html=True)
-        st.header("School Visits Summary")
-        visit_table = table_visit(df)
-        actual_total = metrics["total_visits"]
-        target_total = visit_table.loc[visit_table.index != "Total", "Target_Visit"].sum()
-        gap_total = visit_table.loc[visit_table.index != "Total", "Gap of Visit"].sum()
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Total School Visits", f"{actual_total:,.0f}")
-        c2.metric("Target Visits", f"{target_total:,.0f}")
-        c3.metric("Visit Gap", f"{gap_total:,.0f}")
-        left, right = st.columns(2)
+        # Two rows of three cards are less cramped and more stable than six
+        # narrow cards in a single row when the sidebar opens/closes.
+        for row_start in (0, 3):
+            metric_cols = st.columns(3, gap="medium")
+            for col, (label, value) in zip(metric_cols, metric_values[row_start:row_start + 3]):
+                col.metric(label, value)
+ 
+        st.markdown('<div class="pim-section">Monthly performance</div>', unsafe_allow_html=True)
+        left, right = st.columns(2, gap="large")
+ 
+        monthly = monthly_visit_summary(filtered_df)
+        monthly = monthly.dropna(subset=["Month"])
+        monthly["Month"] = monthly["Month"].astype(str)
+        monthly_visits_fig = px.line(
+            monthly, x="Month", y="Total_Visit", markers=True,
+            title="Monthly School Visits", text="Total_Visit",
+            template="plotly_white"
+        )
+        monthly_visits_fig.update_traces(
+            line=dict(color="#0284C7", width=3), marker=dict(size=8),
+            texttemplate="%{text:,.0f}", textposition="top center",
+            hovertemplate="Month: %{x}<br>Visits: %{y:,.0f}<extra></extra>"
+        )
+        monthly_visits_fig.update_layout(
+            height=360, width=490, autosize=False, margin=dict(l=20, r=20, t=65, b=35),
+            title=dict(x=0.03), showlegend=False,
+            xaxis=dict(categoryorder="array", categoryarray=MONTH_ORDER),
+            yaxis=dict(title="Visits", rangemode="tozero", gridcolor="#E2E8F0"),
+            font=dict(family="Arial", color="#0F172A")
+        )
         with left:
-            fig = create_visit_gap_chart(visit_table)
-            st.pyplot(fig,use_container_width=True)
-            plt.close(fig)
+            st.plotly_chart(monthly_visits_fig, use_container_width=False,
+                            config={"responsive": False, "displaylogo": False, "scrollZoom": True},
+                            key="home_monthly_visits_chart")
+ 
+        standards = standard_month(filtered_df).reset_index()
+        standards["Month"] = standards["Month"].astype(str)
+        standard_fig = px.bar(
+            standards, x="Month", y=["Meets Standard", "Does Not Meet"],
+            barmode="group", title="Minimum Standards by Month",
+            labels={"value": "Schools (%)", "variable": "Status", "Month": "Month"},
+            template="plotly_white", color_discrete_map={
+                "Meets Standard": "#059669", "Does Not Meet": "#F97316"
+            }
+        )
+        standard_fig.update_layout(
+            height=360, width=490, autosize=False, margin=dict(l=20, r=20, t=65, b=35),
+            title=dict(x=0.03), yaxis=dict(title="Percentage (%)", range=[0, 100], gridcolor="#E2E8F0"),
+            xaxis=dict(categoryorder="array", categoryarray=MONTH_ORDER),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            font=dict(family="Arial", color="#0F172A")
+        )
+        standard_fig.update_traces(hovertemplate="Month: %{x}<br>%{fullData.name}: %{y:.1f}%<extra></extra>")
         with right:
-            fig = create_visit_distribution_chart(long_df)
-            st.pyplot(fig,use_container_width=True)
-            plt.close(fig)
-        st.dataframe(visit_table, use_container_width=True)
-
-#============================================================================================================================================================================================
+            st.plotly_chart(standard_fig, use_container_width=False,
+                            config={"responsive": False, "displaylogo": False, "scrollZoom": True},
+                            key="home_standards_chart")
+ 
+        with st.expander("View filtered records", expanded=False):
+            st.dataframe(filtered_df, use_container_width=True, hide_index=True)
+            st.download_button(
+                "Download filtered data (CSV)",
+                data=filtered_df.to_csv(index=False).encode("utf-8-sig"),
+                file_name="pim_filtered_data.csv", mime="text/csv",
+                use_container_width=True, key="download_filtered_csv"
+            )
+ 
+    elif page == "Visits":
+        st.title("School Visits Summary")
+        try:
+            visit_table = table_visit(filtered_df)
+            actual_total = metrics["total_visits"]
+            target_total = visit_table.loc[visit_table.index != "Total", "Target_Visit"].sum()
+            gap_total = visit_table.loc[visit_table.index != "Total", "Gap of Visit"].sum()
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Total School Visits", f"{actual_total:,.0f}")
+            c2.metric("Target Visits", f"{target_total:,.0f}")
+            c3.metric("Visit Gap", f"{gap_total:,.0f}")
+            chart_left, chart_right = st.columns(2)
+            with chart_left:
+                fig = create_visit_gap_chart(visit_table)
+                st.pyplot(fig, use_container_width=True)
+                plt.close(fig)
+            with chart_right:
+                fig = create_visit_distribution_chart(filtered_long_df)
+                st.pyplot(fig, use_container_width=True)
+                plt.close(fig)
+            st.dataframe(visit_table, use_container_width=True)
+            st.download_button("Download visits summary CSV", visit_table.to_csv().encode("utf-8-sig"),
+                               "pim_visits_summary.csv", "text/csv")
+        except Exception as exc:
+            st.error(f"Unable to build the visit summary: {exc}")
  
     elif page == "Standards":
-        st.markdown("""<style>
-                       .block-container {padding-top: 0rem;}
-                       .block-container h1,
-                       .block-container h2,
-                       .block-container h3,
-                       .block-container p,
-                       .block-container label,
-                       .block-container span,
-                       .block-container div {color: black !important;}
-                       </style>""", unsafe_allow_html=True)
-        st.subheader("Standards Meet")
-        tab1, tab2 = st.tabs(["Standard Meet Monthly", "Standard Meet by Staff"])
+        st.title("Minimum Standards")
+        tab1, tab2 = st.tabs(["Monthly standards", "Standards by staff"])
         with tab1:
-            col1, col2 = st.columns(2)
-            with col1:
-                st.dataframe(standard_month(df),width="stretch",height = "content")
-            with col2:
-                st.pyplot(standard_month_gph(df))
+            left, right = st.columns([1, 1])
+            with left:
+                st.dataframe(standard_month(filtered_df), use_container_width=True)
+            with right:
+                fig = standard_month_gph(filtered_df)
+                st.pyplot(fig, use_container_width=True)
+                plt.close(fig)
         with tab2:
-            standards = standard_grade_lf(df)
-            col1, col2 = st.columns(2)
-            with col1:
-                st.dataframe(standards, width = "content", height = "content")
-            with col2:
-                st.pyplot(stnadard_LF_graph(df))
-
-#==============================================================================================================================================================================================
+            standards_by_staff = standard_grade_lf(filtered_df)
+            left, right = st.columns(2)
+            with left:
+                st.dataframe(standards_by_staff, use_container_width=True)
+            with right:
+                fig = stnadard_LF_graph(filtered_df)
+                st.pyplot(fig, use_container_width=True)
+                plt.close(fig)
  
     elif page == "Priority":
-        st.markdown("""<style>
-                       .block-container {padding-top: 0rem;}
-                       .block-container h1,
-                       .block-container h2,
-                       .block-container h3,
-                       .block-container p,
-                       .block-container label,
-                       .block-container span,
-                       .block-container div {color: black !important;}
-                       </style>""", unsafe_allow_html=True)
-        st.subheader("Teacher's Priority Area")
-        tab1, tab2, tab3, tab4, tab5 = st.tabs(["Priority by Standard", "Priority by Monthly", "Priority by School", "Priority by Staff", "Priority by Each Teacher"])
+        st.title("Teacher Priority Areas")
+        tab1, tab2, tab3, tab4, tab5 = st.tabs([
+            "By standard", "Monthly trends", "By school", "By staff", "Teacher detail"
+        ])
         with tab1:
-            st.markdown("Teacher Priority Areas by Month and Minimum Standards Status")
-            col1, col2 = st.columns([1,2])
-            with col1:
-                st.dataframe(stndwisepriority(df),width="content",height="content")
-            with col2:
-                st.pyplot(plot_stnd_priority_heatmap(df))
-        with tab2:
-            left, right = st.columns(2)
-            teacher_table = priority_teacher_table(df)
+            left, right = st.columns([1, 2])
             with left:
-                st.dataframe(teacher_table)
+                st.dataframe(stndwisepriority(filtered_df), use_container_width=True)
+            with right:
+                fig = plot_stnd_priority_heatmap(filtered_df)
+                if fig is not None:
+                    st.pyplot(fig, use_container_width=True)
+                    plt.close(fig)
+                else:
+                    st.info("No priority-by-standard data is available for these filters.")
+        with tab2:
+            teacher_table = priority_teacher_table(filtered_df)
+            left, right = st.columns(2)
+            with left:
+                st.dataframe(teacher_table, use_container_width=True)
             with right:
                 fig = create_priority_chart(teacher_table)
-                st.pyplot(fig)
+                st.pyplot(fig, use_container_width=True)
                 plt.close(fig)
         with tab3:
-            p_long = priority_long(df)
+            p_long = priority_long(filtered_df)
             left, right = st.columns(2)
             with left:
-                st.markdown("**Percentage of schools in each teacher priority area by month : Grade-1**")
-                st.dataframe(priority_school_g1(df, p_long))
-             
+                st.markdown("**Grade 1 — priority areas by month**")
+                st.dataframe(priority_school_g1(filtered_df, p_long), use_container_width=True)
             with right:
-                st.markdown("**Percentage of schools in each teacher priority area by month : Grade-2**")
-                st.dataframe(priority_school_g2(df, p_long))
-        with tab4: 
-            st.markdown("**Percentage of schools handled by staff in each priority area**")
+                st.markdown("**Grade 2 — priority areas by month**")
+                st.dataframe(priority_school_g2(filtered_df, p_long), use_container_width=True)
+        with tab4:
+            p_long = priority_long(filtered_df)
             st.dataframe(priority_staff_table(p_long), use_container_width=True)
         with tab5:
-            st.markdown("**Each Teachers Priority Monthly trends by staff**")
-            col1, col2 = st.columns([1,4])
-            with col1:
-                staff_names = sorted(df["RtR Staff Name"].dropna().unique().tolist())
-                selected_staff = st.selectbox("Select the Staff Name",staff_names,key="priority_teacher_staff",)
-            with col2:
-                fig, plot_data = teacher_priority_heatmap(df,staff_name=selected_staff,)
-                st.pyplot(fig)
-                plt.close(fig)
-
-#============================================================================================================================================================================================= 
+            staff_options = sorted(filtered_df["RtR Staff Name"].dropna().unique().tolist()) if "RtR Staff Name" in filtered_df else []
+            if staff_options:
+                chosen_staff = st.selectbox("Select staff member", staff_options, key="priority_teacher_detail_staff")
+                fig, plot_data = teacher_priority_heatmap(filtered_df, staff_name=chosen_staff)
+                if fig is not None:
+                    st.pyplot(fig, use_container_width=True)
+                    plt.close(fig)
+                    with st.expander("View heatmap values"):
+                        st.dataframe(plot_data, use_container_width=True)
+                else:
+                    st.info("No monthly priority data is available for this staff member.")
+            else:
+                st.info("No staff records are available for the selected filters.")
  
     elif page == "Reports":
-        st.markdown("""<style>.block-container {padding-top: 0rem;}</style>""", unsafe_allow_html=True)
-        st.subheader("Reports")
+        st.title("Reports & Exports")
+        st.caption("Export the records currently selected by the sidebar filters.")
         output = BytesIO()
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
-            df.to_excel(writer, index=False, sheet_name="PIM Cleaned")
-            long_df.to_excel(writer, index=False, sheet_name="PIM Monthly")
-            table_visit(df).to_excel(writer, sheet_name="Visits Summary")
-            standard_grade_lf(df).to_excel(writer, index=False, sheet_name="Standards Summary")
+            filtered_df.to_excel(writer, index=False, sheet_name="PIM Cleaned")
+            filtered_long_df.to_excel(writer, index=False, sheet_name="PIM Monthly")
+            try:
+                table_visit(filtered_df).to_excel(writer, sheet_name="Visits Summary")
+            except Exception:
+                pass
+            try:
+                standard_grade_lf(filtered_df).to_excel(writer, sheet_name="Standards Summary")
+            except Exception:
+                pass
         st.download_button(
-            label="Download Excel Report", data=output.getvalue(), file_name="PIM_Report.xlsx",
+            label="📥 Download Excel Report", data=output.getvalue(),
+            file_name="PIM_Report.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             use_container_width=True,
         )
+        st.markdown("**Preview of included records**")
+        st.dataframe(filtered_df.head(100), use_container_width=True, hide_index=True)
  
-# ============================================================
-# 7. MAIN APPLICATION AND PAGE ROUTING
-# ============================================================
+ 
 def initialize_session_state():
     defaults = {"logged_in": False, "page": "login", "df": None, "selected_sheet": None}
     for key, value in defaults.items():
@@ -971,7 +1107,7 @@ def main():
     st.set_page_config(page_title="PIM Dashboard",
                        page_icon="🎯",
                        layout="wide",
-                       initial_sidebar_state="collapsed",
+                       initial_sidebar_state="expanded",
                        menu_items={
                            "About": "PIM Dashboard — Project Implementation Monitoring"})
     initialize_session_state()
@@ -1003,3 +1139,5 @@ def main():
  
 if __name__ == "__main__":
     main()
+
+ 
