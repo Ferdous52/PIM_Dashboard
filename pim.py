@@ -144,20 +144,32 @@ def df_long(df: pd.DataFrame) -> pd.DataFrame:
         raise ValueError(f"Expected visit column '{visit_column}' was not found.")
     df_long["Meeting Minimum Standards By Grade?"] = np.where(df_long[visit_column] >= 2,1,0)
     return df_long
- 
+
+#========================================================================================================================================================
+#========================================================================================================================================================
  
 def calculate_dashboard_metrics(df: pd.DataFrame) -> dict:
-    visit_cols = [c for c in df.columns if c.startswith(VISIT_PREFIX)]
-    standard_cols = [c for c in df.columns if c.startswith(STANDARD_PREFIX)]
-    priority_cols = [c for c in df.columns if c.startswith(PRIORITY_PREFIX)]
-    return {
-        "total_staff": df["RtR Staff Name"].nunique() if "RtR Staff Name" in df else 0,
-        "total_schools": df["Project ID"].nunique() if "School Name" in df else 0,
-        "total_teachers": df["Teacher Name"].nunique() if "Teacher Name" in df else 0,
-        "total_visits": float(df[visit_cols].sum().sum()) if visit_cols else 0,
-        "standard_rate": float(df[standard_cols].mean().mean() * 100) if standard_cols else 0,
-        "avg_priority": float(df[priority_cols].mean().mean()) if priority_cols else 0,
-    }
+    df1 = df_long(df)
+    standard_rate = 0.0
+    col = "Meeting Minimum Standards By Grade?"
+    if col in df1.columns:
+        v = df1[col].value_counts()
+        x = v.get(0, 0)  # Not meeting standards
+        y = v.get(1, 0)  # Meeting standards
+        total = x + y
+        standard_rate = (y / total * 100) if total > 0 else 0.0
+
+    priority_col = "Teacher's Priority Area (0, 1, 2, or 3)"
+    avg_priority = (float(pd.to_numeric(df1[priority_col], errors="coerce").mean()) if priority_col in df1.columnselse 0.0)
+    metrics = {"total_staff": (df1["RtR Staff Name"].nunique() if "RtR Staff Name" in df1.columns else 0),
+               "total_schools": (df1["Project ID"].nunique() if "Project ID" in df1.columns else 0),
+               "total_teachers": (df1["Teacher Name"].nunique() if "Teacher Name" in df1.columns else 0),
+               "total_visits": (float(pd.to_numeric(df1["Total Number of Visits Per Month"], errors="coerce").sum()) if "Total Number of Visits Per Month" in df1.columns else 0.0),
+               "standard_rate": standard_rate,
+               "avg_priority": avg_priority,
+              }
+
+    return metrics
  
  
 def monthly_visit_summary(df: pd.DataFrame) -> pd.DataFrame:
@@ -359,7 +371,7 @@ def standard_month_gph(df: pd.DataFrame):
     ax.set_xticklabels(st_mn_gh.index)
     ax.set_xlabel("Month")
     ax.set_ylabel("Percentage (%)")
-    ax.set_title("Meeting Minimum Standards by Grade")
+    ax.set_title("Meeting Minimum Standards")
     ax.legend()
     ax.set_ylim(0, 110)
     fig.tight_layout()
@@ -670,7 +682,7 @@ def teacher_priority_heatmap(df: pd.DataFrame, staff_name=None):
         cbar_kws={"ticks": [0, 1, 2, 3],"label": "Priority Area",},
         ax=ax,)
 
-    title = (f"Teacher Priority Trends — {staff_name}" if staff_name is not None else "Teacher Priority Trends — All Staff")
+    title = (f"Teacher Priority Trends — {staff_name}" if staff_name is not None else "Teacher Priority — All Staff")
 
     ax.set_title(title, fontsize=14)
     ax.set_xlabel("Month")
@@ -750,13 +762,12 @@ def upload_page():
                 excel_file = pd.ExcelFile(uploaded_file)
                 sheet_names = excel_file.sheet_names
                 selected_sheet = st.selectbox("Select Worksheet", sheet_names)
-                if st.button("Continue to Dashboard →", use_container_width=True):
+                if st.button("Continue to Dashboard →"):
                     try:
                         raw_df = pd.read_excel(uploaded_file, sheet_name=selected_sheet, skiprows=17, header=None)
                         if len(raw_df) < 2:
                             st.error("The selected worksheet does not contain enough rows to create the required headers.")
                         else:
-                            # Validate now so header issues are shown on the upload page.
                             cleaned = data_clean(raw_df)
                             st.session_state.df = raw_df
                             st.session_state.selected_sheet = selected_sheet
@@ -779,8 +790,6 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
     [data-testid="stMetricValue"] {color:#FFFFFF!important;}
     </style>
     """, unsafe_allow_html=True)
-    #st.markdown('<div style="color:#0F172A;font-size:32px;font-weight:700;">PIM Dashboard</div>', unsafe_allow_html=True)
-    #st.caption(f"Worksheet: {st.session_state.selected_sheet}")
     with st.sidebar:
         st.markdown('<div style="font-size:24px;font-weight:700;margin-bottom:20px;">PIM Dashboard</div>', unsafe_allow_html=True)
         st.markdown("---")
