@@ -148,37 +148,17 @@ def df_long(df: pd.DataFrame) -> pd.DataFrame:
 #========================================================================================================================================================
 #========================================================================================================================================================
  
-def calculate_dashboard_metrics(df: pd.DataFrame,monthly_df: pd.DataFrame | None = None,) -> dict:
-    df1 = monthly_df if monthly_df is not None else df_long(df)
-    standard_rate = 0.0
-    col = "Meeting Minimum Standards By Grade?"
-    if col in df1.columns:
-        values = df1[col].value_counts()
-        met = values.get(1, 0)
-        not_met = values.get(0, 0)
-        total = met + not_met
-
-        if total:
-            standard_rate = met / total * 100
-
-    priority_col = "Teacher's Priority Area (0, 1, 2, or 3)"
-    avg_priority = (
-        pd.to_numeric(df1[priority_col], errors="coerce").mean()
-        if priority_col in df1.columns else 0.0
-    )
-
+def calculate_dashboard_metrics(df: pd.DataFrame) -> dict:
+    visit_cols = [c for c in df.columns if c.startswith(VISIT_PREFIX)]
+    standard_cols = [c for c in df.columns if c.startswith(STANDARD_PREFIX)]
+    priority_cols = [c for c in df.columns if c.startswith(PRIORITY_PREFIX)]
     return {
-        "total_staff": df1["RtR Staff Name"].nunique()
-            if "RtR Staff Name" in df1.columns else 0,
-        "total_schools": df1["Project ID"].nunique()
-            if "Project ID" in df1.columns else 0,
-        "total_teachers": df1["Teacher Name"].nunique()
-            if "Teacher Name" in df1.columns else 0,
-        "total_visits": pd.to_numeric(
-            df1["Total Number of Visits Per Month"], errors="coerce"
-        ).sum() if "Total Number of Visits Per Month" in df1.columns else 0.0,
-        "standard_rate": standard_rate,
-        "avg_priority": float(avg_priority) if pd.notna(avg_priority) else 0.0,
+        "total_staff": df["RtR Staff Name"].nunique() if "RtR Staff Name" in df else 0,
+        "total_schools": df["Project ID"].nunique() if "School Name" in df else 0,
+        "total_teachers": df["Teacher Name"].nunique() if "Teacher Name" in df else 0,
+        "total_visits": float(df[visit_cols].sum().sum()) if visit_cols else 0,
+        "standard_rate": float(df[standard_cols].mean().mean() * 100) if standard_cols else 0,
+        "avg_priority": float(df[priority_cols].mean().mean()) if priority_cols else 0,
     }
  
  
