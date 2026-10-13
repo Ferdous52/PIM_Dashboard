@@ -848,11 +848,11 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
         left, right = st.columns(2)
         with left:
             fig = create_visit_gap_chart(visit_table)
-            st.pyplot(fig)
+            st.pyplot(fig,use_container_width=True)
             plt.close(fig)
         with right:
             fig = create_visit_distribution_chart(long_df)
-            st.pyplot(fig)
+            st.pyplot(fig,use_container_width=True)
             plt.close(fig)
         st.dataframe(visit_table, use_container_width=True)
 
