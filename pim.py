@@ -895,82 +895,37 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
         filtered_long_df = long_df.copy()
  
     if page == "Home":
-        st.title("PIM Overview")
-        st.caption("Project Implementation Monitoring · Interactive overview")
-        metric_values = [
-            ("Total Staff", f"{metrics['total_staff']:,}"),
-            ("Total Schools", f"{metrics['total_schools']:,}"),
-            ("Total Teachers", f"{metrics['total_teachers']:,}"),
-            ("Total School Visits", f"{metrics['total_visits']:,.0f}"),
-            ("Standards Met", f"{metrics['standard_rate']:.1f}%"),
-            ("Average Priority Score", f"{metrics['avg_priority']:.2f}"),
+        st.markdown("""<style>.block-container {padding-top: .5rem;}</style>""", unsafe_allow_html=True)
+        cols = st.columns(6)
+        labels = [
+            ("Total Staff", metrics["total_staff"]),
+            ("Total Schools", metrics["total_schools"]),
+            ("Total Teachers", metrics["total_teachers"]),
+            ("Total School Visits", f'{metrics["total_visits"]:,.0f}'),
+            ("Standards Met", f'{metrics["standard_rate"]:.1f}%'),
+            ("Average Priority Score", f'{metrics["avg_priority"]:.2f}'),
         ]
-        # Two rows of three cards are less cramped and more stable than six
-        # narrow cards in a single row when the sidebar opens/closes.
-        for row_start in (0, 3):
-            metric_cols = st.columns(3, gap="medium")
-            for col, (label, value) in zip(metric_cols, metric_values[row_start:row_start + 3]):
-                col.metric(label, value)
- 
-        st.markdown('<div class="pim-section">Monthly performance</div>', unsafe_allow_html=True)
-        left, right = st.columns(2, gap="large")
- 
-        monthly = monthly_visit_summary(filtered_df)
-        monthly = monthly.dropna(subset=["Month"])
-        monthly["Month"] = monthly["Month"].astype(str)
-        monthly_visits_fig = px.line(
-            monthly, x="Month", y="Total_Visit", markers=True,
-            title="Monthly School Visits", text="Total_Visit",
-            template="plotly_white"
-        )
-        monthly_visits_fig.update_traces(
-            line=dict(color="#0284C7", width=3), marker=dict(size=8),
-            texttemplate="%{text:,.0f}", textposition="top center",
-            hovertemplate="Month: %{x}<br>Visits: %{y:,.0f}<extra></extra>"
-        )
-        monthly_visits_fig.update_layout(
-            height=360, width=490, autosize=False, margin=dict(l=20, r=20, t=65, b=35),
-            title=dict(x=0.03), showlegend=False,
-            xaxis=dict(categoryorder="array", categoryarray=MONTH_ORDER),
-            yaxis=dict(title="Visits", rangemode="tozero", gridcolor="#E2E8F0"),
-            font=dict(family="Arial", color="#0F172A")
-        )
-        with left:
-            st.plotly_chart(monthly_visits_fig, use_container_width=False,
-                            config={"responsive": False, "displaylogo": False, "scrollZoom": True},
-                            key="home_monthly_visits_chart")
- 
-        standards = standard_month(filtered_df).reset_index()
-        standards["Month"] = standards["Month"].astype(str)
-        standard_fig = px.bar(
-            standards, x="Month", y=["Meets Standard", "Does Not Meet"],
-            barmode="group", title="Minimum Standards by Month",
-            labels={"value": "Schools (%)", "variable": "Status", "Month": "Month"},
-            template="plotly_white", color_discrete_map={
-                "Meets Standard": "#059669", "Does Not Meet": "#F97316"
-            }
-        )
-        standard_fig.update_layout(
-            height=360, width=490, autosize=False, margin=dict(l=20, r=20, t=65, b=35),
-            title=dict(x=0.03), yaxis=dict(title="Percentage (%)", range=[0, 100], gridcolor="#E2E8F0"),
-            xaxis=dict(categoryorder="array", categoryarray=MONTH_ORDER),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-            font=dict(family="Arial", color="#0F172A")
-        )
-        standard_fig.update_traces(hovertemplate="Month: %{x}<br>%{fullData.name}: %{y:.1f}%<extra></extra>")
-        with right:
-            st.plotly_chart(standard_fig, use_container_width=False,
-                            config={"responsive": False, "displaylogo": False, "scrollZoom": True},
-                            key="home_standards_chart")
- 
-        with st.expander("View filtered records", expanded=False):
-            st.dataframe(filtered_df, use_container_width=True, hide_index=True)
-            st.download_button(
-                "Download filtered data (CSV)",
-                data=filtered_df.to_csv(index=False).encode("utf-8-sig"),
-                file_name="pim_filtered_data.csv", mime="text/csv",
-                use_container_width=True, key="download_filtered_csv"
-            )
+        for col, (label, value) in zip(cols, labels):
+            col.metric(label, value)
+         
+        col1, col2, col3= st.columns(3)
+        
+        with col1:
+         fig = create_monthly_visit_chart(df)
+         st.pyplot(fig, use_container_width=True)
+         plt.close(fig)
+        
+        with col2:
+         fig = standard_graph(df)
+         st.pyplot(fig, use_container_width=True)
+         plt.close(fig)
+         
+        with col3:
+         teacher_table = priority_teacher_table(df)
+         fig = create_priority_chart(teacher_table)
+         st.pyplot(fig, use_container_width=True)
+         plt.close(fig)
+
  
     elif page == "Visits":
         st.title("School Visits Summary")
