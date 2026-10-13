@@ -160,7 +160,7 @@ def calculate_dashboard_metrics(df: pd.DataFrame) -> dict:
         standard_rate = (y / total * 100) if total > 0 else 0.0
 
     priority_col = "Teacher's Priority Area (0, 1, 2, or 3)"
-    avg_priority = (float(pd.to_numeric(df1[priority_col], errors="coerce").mean()) if priority_col in df1.columnselse 0.0)
+    avg_priority = (float(pd.to_numeric(df1[priority_col], errors="coerce").mean()) if priority_col in df1.columns else 0.0)
     metrics = {"total_staff": (df1["RtR Staff Name"].nunique() if "RtR Staff Name" in df1.columns else 0),
                "total_schools": (df1["Project ID"].nunique() if "Project ID" in df1.columns else 0),
                "total_teachers": (df1["Teacher Name"].nunique() if "Teacher Name" in df1.columns else 0),
