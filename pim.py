@@ -602,161 +602,62 @@ def priority_school_g2(df: pd.DataFrame,long_df: pd.DataFrame) -> pd.DataFrame:
  
 
 def teacher_priority_heatmap(df: pd.DataFrame, staff_name=None):
-    # df is already cleaned in main(); do not call data_clean() again.
-
     months = MONTH_ORDER
     priority_prefix = PRIORITY_STUB + "_"
-
-    # Identify available priority columns
-    priority_cols = {
-        month: f"{priority_prefix}{month}"
-        for month in months
-        if f"{priority_prefix}{month}" in df.columns
-    }
-
+    priority_cols = {month: f"{priority_prefix}{month}"for month in months if f"{priority_prefix}{month}" in df.columns}
     if not priority_cols:
         return None, None
-
-    # Filter for the selected staff member
     df_temp = df.copy()
 
     if staff_name is not None:
-        df_temp = df_temp[
-            df_temp["RtR Staff Name"].eq(staff_name)
-        ].copy()
-
+        df_temp = df_temp[df_temp["RtR Staff Name"].eq(staff_name)].copy()
     if df_temp.empty:
         return None, None
+    id_cols = [col for col in ["RtR Staff Name","Project ID","School Name","Teacher Name","Grade","Class",] if col in df_temp.columns]
 
-    # Teacher identification columns
-    id_cols = [
-        col for col in [
-            "RtR Staff Name",
-            "Project ID",
-            "School Name",
-            "Teacher Name",
-            "Grade",
-            "Class",
-        ]
-        if col in df_temp.columns
-    ]
-
-    # Select priority data and rename columns to month names
-    heatmap_data = df_temp[
-        id_cols + list(priority_cols.values())
-    ].copy()
-
-    heatmap_data = heatmap_data.rename(
-        columns={
-            col: month
-            for month, col in priority_cols.items()
-        }
-    )
-
-    # Clean priority values: only 0, 1, 2, and 3 are valid
+    heatmap_data = df_temp[id_cols + list(priority_cols.values())].copy()
+    heatmap_data = heatmap_data.rename(columns={col: month for month, col in priority_cols.items()})
     for month in priority_cols:
-        heatmap_data[month] = pd.to_numeric(
-            heatmap_data[month], errors="coerce"
-        )
+        heatmap_data[month] = pd.to_numeric(heatmap_data[month], errors="coerce")
+        heatmap_data.loc[~heatmap_data[month].isin([0, 1, 2, 3]),month] = float("nan")
 
-        heatmap_data.loc[
-            ~heatmap_data[month].isin([0, 1, 2, 3]),
-            month
-        ] = float("nan")
-
-    # Keep months that have valid priority data
-    available_months = [
-        month for month in months
-        if month in heatmap_data.columns
-        and heatmap_data[month].notna().any()
-    ]
-
+    available_months = [month for month in months if month in heatmap_data.columns and heatmap_data[month].notna().any()]
+ 
     if not available_months:
         return None, None
 
-    # Remove rows without any priority values
-    heatmap_data = heatmap_data.dropna(
-        subset=available_months, how="all"
-    )
+    heatmap_data = heatmap_data.dropna(subset=available_months, how="all")
 
     if heatmap_data.empty:
         return None, None
 
-    # Sort teachers
-    sort_cols = [
-        col for col in ["Teacher Name", "Project ID", "Grade"]
-        if col in heatmap_data.columns
-    ]
+    sort_cols = [col for col in ["Teacher Name", "Project ID", "Grade"] if col in heatmap_data.columns]
 
     if sort_cols:
-        heatmap_data = heatmap_data.sort_values(
-            sort_cols, na_position="last"
-        )
+        heatmap_data = heatmap_data.sort_values(sort_cols, na_position="last")
 
-    # Build readable teacher labels
     if "Teacher Name" in heatmap_data.columns:
-        labels = (
-            heatmap_data["Teacher Name"]
-            .fillna("Unknown Teacher")
-            .astype(str)
-        )
+        labels = (heatmap_data["Teacher Name"].fillna("Unknown Teacher").astype(str))
 
         if "School Name" in heatmap_data.columns:
-            labels += (
-                " | "
-                + heatmap_data["School Name"]
-                .fillna("")
-                .astype(str)
-            )
-
+            labels += (" | " + heatmap_data["School Name"].fillna("").astype(str))
         if "Grade" in heatmap_data.columns:
-            labels += (
-                " | Grade "
-                + heatmap_data["Grade"]
-                .fillna("")
-                .astype(str)
-            )
-
+            labels += (" | Grade " + heatmap_data["Grade"].fillna("").astype(str))
         if "Class" in heatmap_data.columns:
-            labels += (
-                " | Class "
-                + heatmap_data["Class"]
-                .fillna("")
-                .astype(str)
-            )
+            labels += (" | Class "+ heatmap_data["Class"].fillna("").astype(str))
     else:
-        labels = pd.Series(
-            [f"Teacher {i + 1}" for i in range(len(heatmap_data))],
-            index=heatmap_data.index,
-        )
+        labels = pd.Series([f"Teacher {i + 1}" for i in range(len(heatmap_data))],index=heatmap_data.index,)
 
-    # Prepare heatmap matrix
     plot_data = heatmap_data[available_months].copy()
     plot_data.index = labels
-
-    # Priority colors: 0, 1, 2, 3
-    colors = [
-        "#d9eaf7",
-        "#78b7c5",
-        "#f4c36a",
-        "#d95f59",
-    ]
-
+    colors = ["#d9eaf7","#78b7c5","#f4c36a","#d95f59",]
     cmap = ListedColormap(colors)
     cmap.set_bad("#eeeeee")
 
-    norm = BoundaryNorm(
-        [-0.5, 0.5, 1.5, 2.5, 3.5],
-        cmap.N,
-    )
-
-    # Figure height adjusts to the number of records
+    norm = BoundaryNorm([-0.5, 0.5, 1.5, 2.5, 3.5],cmap.N,)
     fig_height = max(5, len(plot_data) * 0.35)
-
-    fig, ax = plt.subplots(
-        figsize=(12, fig_height)
-    )
-
+    fig, ax = plt.subplots(figsize=(12, fig_height))
+ 
     sns.heatmap(
         plot_data,
         cmap=cmap,
@@ -766,28 +667,17 @@ def teacher_priority_heatmap(df: pd.DataFrame, staff_name=None):
         fmt=".0f",
         linewidths=0.3,
         linecolor="white",
-        cbar_kws={
-            "ticks": [0, 1, 2, 3],
-            "label": "Priority Area",
-        },
-        ax=ax,
-    )
+        cbar_kws={"ticks": [0, 1, 2, 3],"label": "Priority Area",},
+        ax=ax,)
 
-    title = (
-        f"Teacher Priority Trends — {staff_name}"
-        if staff_name is not None
-        else "Teacher Priority Trends — All Staff"
-    )
+    title = (f"Teacher Priority Trends — {staff_name}" if staff_name is not None else "Teacher Priority Trends — All Staff")
 
     ax.set_title(title, fontsize=14)
     ax.set_xlabel("Month")
     ax.set_ylabel("Teacher / School / Grade / Class")
     ax.tick_params(axis="x", rotation=0)
     ax.tick_params(axis="y", labelsize=8)
-
     fig.tight_layout()
-
-    # Return the figure and the underlying data
     return fig, plot_data
 
 
