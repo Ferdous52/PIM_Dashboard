@@ -893,9 +893,12 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
         filtered_long_df = df_long(filtered_df)
     except Exception:
         filtered_long_df = long_df.copy()
- 
+#==========================================================================================================================================================
+#                    Home Page 
+#==========================================================================================================================================================
+    st.markdown("""<style>h1, h2, h3 {color: black !important;}</style>""", unsafe_allow_html=True)
     if page == "Home":
-        st.markdown("""<style>.block-container {padding-top: .5rem;}</style>""", unsafe_allow_html=True)
+        st.markdown("""<style>.block-container {padding-top: 1rem;}</style>""", unsafe_allow_html=True)
         cols = st.columns(6)
         labels = [
             ("Total Staff", metrics["total_staff"]),
@@ -925,7 +928,9 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
          fig = create_priority_chart(teacher_table)
          st.pyplot(fig, use_container_width=True)
          plt.close(fig)
-
+#==========================================================================================================================================================
+#                   Visits     
+#==========================================================================================================================================================
  
     elif page == "Visits":
         st.title("School Visits Summary")
@@ -952,7 +957,9 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                                "pim_visits_summary.csv", "text/csv")
         except Exception as exc:
             st.error(f"Unable to build the visit summary: {exc}")
- 
+#==========================================================================================================================================================
+#                   Standards     
+#==========================================================================================================================================================
     elif page == "Standards":
         st.title("Minimum Standards")
         tab1, tab2 = st.tabs(["Monthly standards", "Standards by staff"])
@@ -973,7 +980,9 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                 fig = stnadard_LF_graph(filtered_df)
                 st.pyplot(fig, use_container_width=True)
                 plt.close(fig)
- 
+#==========================================================================================================================================================
+#                   Priority     
+#==========================================================================================================================================================
     elif page == "Priority":
         st.title("Teacher Priority Areas")
         tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -1025,7 +1034,9 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                     st.info("No monthly priority data is available for this staff member.")
             else:
                 st.info("No staff records are available for the selected filters.")
- 
+#==========================================================================================================================================================
+#                   Reports     
+#==========================================================================================================================================================
     elif page == "Reports":
         st.title("Reports & Exports")
         st.caption("Export the records currently selected by the sidebar filters.")
