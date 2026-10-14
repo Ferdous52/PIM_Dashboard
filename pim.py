@@ -162,7 +162,7 @@ df = data_clean(raw_df)
 df1 = df_long(df) 
 
 
-def dashboard_metrics():
+def dashboard_metrics(df: pd.DataFrame) -> dict:
     total_staff = df1["RtR Staff Name"].nunique()
     total_school = df1["Project ID"].nunique()
     total_teachers = df1["Teacher Name"].nunique()
