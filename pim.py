@@ -158,20 +158,19 @@ def df_long(df: pd.DataFrame) -> pd.DataFrame:
 #=======================================================================================================================================================
 #=======================================================================================================================================================
 
-def dashboard_metrics(df: pd.DataFrame) -> dict:
-    total_staff = df1["RtR Staff Name"].nunique()
-    total_school = df1["Project ID"].nunique()
-    total_teachers = df1["Teacher Name"].nunique()
-    total_visits = int(df1["Total Number of Visits Per Month"].sum())
-    standard_rate = f"{round((df1["Meeting Minimum Standards By Grade?"].value_counts().loc[1]/df1["Meeting Minimum Standards By Grade?"].value_counts().sum())*100,1)}%"
-    avg_priority = float((round(df1["Teacher's Priority Area (0, 1, 2, or 3)"].mean(),1)))
-    metrics = {"total_staff" : total_staff,
-               "total_schools": total_school,
-               "total_teachers": total_teachers,
-               "total_visits" : total_visits,
-               "standard_rate" : standard_rate,
-               "avg_priority" :  avg_priority}
-    return metrics
+ def dashboard_metrics(df: pd.DataFrame) -> dict:
+    visit_cols = [c for c in df.columns if c.startswith(VISIT_PREFIX)]
+    standard_cols = [c for c in df.columns if c.startswith(STANDARD_PREFIX)]
+    priority_cols = [c for c in df.columns if c.startswith(PRIORITY_PREFIX)]
+    return {
+        "total_staff": df["RtR Staff Name"].nunique() if "RtR Staff Name" in df else 0,
+        "total_schools": df["Project ID"].nunique() if "School Name" in df else 0,
+        "total_teachers": df["Teacher Name"].nunique() if "Teacher Name" in df else 0,
+        "total_visits": float(df[visit_cols].sum().sum()) if visit_cols else 0,
+        "standard_rate": float(df[standard_cols].mean().mean() * 100) if standard_cols else 0,
+        "avg_priority": float(df[priority_cols].mean().mean()) if priority_cols else 0,
+    }
+ 
  
  
 def monthly_visit_summary(df: pd.DataFrame) -> pd.DataFrame:
