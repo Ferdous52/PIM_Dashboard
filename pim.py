@@ -813,9 +813,16 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
       .stApp { background: #F4F7FB; }
       .main .block-container { max-width: 1600px; padding: 1.25rem 1.5rem 2rem; }
       [data-testid="stMetric"] {
-        background: #0F172A; padding: 16px 18px; border-radius: 14px;
+        background: linear-gradient(145deg, #0F172A, #1E293B);
+        padding: 14px 12px; border-radius: 14px;
         border: 1px solid #243247; box-shadow: 0 4px 14px rgba(15,23,42,.10);
-        min-height: 112px;
+        min-height: 112px; height: 100%; overflow-wrap: anywhere;
+      }
+      [data-testid="stMetricLabel"] p { font-size: .78rem !important; }
+      [data-testid="stMetricValue"] { font-size: clamp(1.05rem, 1.5vw, 1.8rem) !important; }
+      @media (max-width: 1100px) {
+        [data-testid="stMetricLabel"] p { font-size: .68rem !important; }
+        [data-testid="stMetricValue"] { font-size: 1rem !important; }
       }
       [data-testid="stMetricLabel"] { color: #CBD5E1 !important; }
       [data-testid="stMetricValue"] { color: #FFFFFF !important; }
@@ -893,77 +900,142 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
         filtered_long_df = df_long(filtered_df)
     except Exception:
         filtered_long_df = long_df.copy()
+#=================================================================================================================
+
  
     if page == "Home":
         st.title("PIM Overview")
         st.caption("Project Implementation Monitoring · Interactive overview")
+
+        # Six KPI cards in one row on wide screens.
         metric_values = [
             ("Total Staff", f"{metrics['total_staff']:,}"),
             ("Total Schools", f"{metrics['total_schools']:,}"),
             ("Total Teachers", f"{metrics['total_teachers']:,}"),
             ("Total School Visits", f"{metrics['total_visits']:,.0f}"),
             ("Standards Met", f"{metrics['standard_rate']:.1f}%"),
-            ("Average Priority Score", f"{metrics['avg_priority']:.2f}"),
+            ("Average Priority", f"{metrics['avg_priority']:.2f}"),
         ]
-        # Two rows of three cards are less cramped and more stable than six
-        # narrow cards in a single row when the sidebar opens/closes.
-        for row_start in (0, 3):
-            metric_cols = st.columns(3, gap="medium")
-            for col, (label, value) in zip(metric_cols, metric_values[row_start:row_start + 3]):
-                col.metric(label, value)
- 
-        st.markdown('<div class="pim-section">Monthly performance</div>', unsafe_allow_html=True)
-        left, right = st.columns(2, gap="large")
- 
-        monthly = monthly_visit_summary(filtered_df)
-        monthly = monthly.dropna(subset=["Month"])
+        metric_cols = st.columns(6, gap="small")
+        for col, (label, value) in zip(metric_cols, metric_values):
+            with col:
+                st.metric(label, value)
+
+        st.markdown(
+            '<div class="pim-section">Monthly performance</div>',
+            unsafe_allow_html=True
+        )
+        # Chart controls make the overview useful for quick comparisons.
+        control1, control2, control3 = st.columns([1, 1, 2], gap="medium")
+        with control1:
+            visit_chart_type = st.selectbox(
+                "Visits chart", ["Line", "Bar"], key="home_visit_chart_type"
+            )
+        with control2:
+            standards_chart_mode = st.selectbox(
+                "Standards chart", ["Grouped bars", "Stacked bars", "Line"],
+                key="home_standards_chart_mode"
+            )
+        with control3:
+            show_monthly_values = st.checkbox(
+                "Show values on charts", value=True, key="home_show_chart_values"
+            )
+
+        monthly = monthly_visit_summary(filtered_df).dropna(subset=["Month"]).copy()
         monthly["Month"] = monthly["Month"].astype(str)
-        monthly_visits_fig = px.line(
-            monthly, x="Month", y="Total_Visit", markers=True,
-            title="Monthly School Visits", text="Total_Visit",
-            template="plotly_white"
-        )
-        monthly_visits_fig.update_traces(
-            line=dict(color="#0284C7", width=3), marker=dict(size=8),
-            texttemplate="%{text:,.0f}", textposition="top center",
-            hovertemplate="Month: %{x}<br>Visits: %{y:,.0f}<extra></extra>"
-        )
+        if visit_chart_type == "Line":
+            monthly_visits_fig = px.line(
+                monthly, x="Month", y="Total_Visit", markers=True,
+                title="Monthly School Visits", template="plotly_white"
+            )
+            monthly_visits_fig.update_traces(
+                line=dict(color="#0284C7", width=3), marker=dict(size=8),
+                text=monthly["Total_Visit"] if show_monthly_values else None,
+                texttemplate="%{text:,.0f}" if show_monthly_values else None,
+                textposition="top center",
+                hovertemplate="Month: %{x}<br>Visits: %{y:,.0f}<extra></extra>"
+            )
+        else:
+            monthly_visits_fig = px.bar(
+                monthly, x="Month", y="Total_Visit",
+                title="Monthly School Visits", template="plotly_white",
+                text="Total_Visit" if show_monthly_values else None,
+                color_discrete_sequence=["#0284C7"]
+            )
+            monthly_visits_fig.update_traces(
+                texttemplate="%{text:,.0f}" if show_monthly_values else None,
+                hovertemplate="Month: %{x}<br>Visits: %{y:,.0f}<extra></extra>"
+            )
         monthly_visits_fig.update_layout(
-            height=360, width=490, autosize=False, margin=dict(l=20, r=20, t=65, b=35),
+            height=390, autosize=True, margin=dict(l=20, r=20, t=65, b=35),
             title=dict(x=0.03), showlegend=False,
             xaxis=dict(categoryorder="array", categoryarray=MONTH_ORDER),
             yaxis=dict(title="Visits", rangemode="tozero", gridcolor="#E2E8F0"),
-            font=dict(family="Arial", color="#0F172A")
+            font=dict(family="Arial", color="#0F172A"),
+            hovermode="x unified"
         )
-        with left:
-            st.plotly_chart(monthly_visits_fig, use_container_width=False,
-                            config={"responsive": False, "displaylogo": False, "scrollZoom": True},
-                            key="home_monthly_visits_chart")
- 
+
         standards = standard_month(filtered_df).reset_index()
         standards["Month"] = standards["Month"].astype(str)
-        standard_fig = px.bar(
-            standards, x="Month", y=["Meets Standard", "Does Not Meet"],
-            barmode="group", title="Minimum Standards by Month",
-            labels={"value": "Schools (%)", "variable": "Status", "Month": "Month"},
-            template="plotly_white", color_discrete_map={
-                "Meets Standard": "#059669", "Does Not Meet": "#F97316"
-            }
+        standards_long = standards.melt(
+            id_vars="Month",
+            value_vars=["Meets Standard", "Does Not Meet"],
+            var_name="Status", value_name="Percentage"
+        )
+        if standards_chart_mode == "Line":
+            standard_fig = px.line(
+                standards_long, x="Month", y="Percentage", color="Status",
+                markers=True, title="Minimum Standards by Month",
+                template="plotly_white",
+                color_discrete_map={
+                    "Meets Standard": "#059669", "Does Not Meet": "#F97316"
+                }
+            )
+        else:
+            standard_fig = px.bar(
+                standards_long, x="Month", y="Percentage", color="Status",
+                barmode="group" if standards_chart_mode == "Grouped bars" else "stack",
+                title="Minimum Standards by Month", template="plotly_white",
+                color_discrete_map={
+                    "Meets Standard": "#059669", "Does Not Meet": "#F97316"
+                }
+            )
+        standard_fig.update_traces(
+            texttemplate="%{y:.0f}%" if show_monthly_values else None,
+            textposition="outside" if show_monthly_values and standards_chart_mode != "Line" else None,
+            hovertemplate="Month: %{x}<br>%{fullData.name}: %{y:.1f}%<extra></extra>"
         )
         standard_fig.update_layout(
-            height=360, width=490, autosize=False, margin=dict(l=20, r=20, t=65, b=35),
-            title=dict(x=0.03), yaxis=dict(title="Percentage (%)", range=[0, 100], gridcolor="#E2E8F0"),
+            height=390, autosize=True, margin=dict(l=20, r=20, t=65, b=35),
+            title=dict(x=0.03),
+            yaxis=dict(title="Percentage (%)", range=[0, 105 if show_monthly_values else 100],
+                       gridcolor="#E2E8F0"),
             xaxis=dict(categoryorder="array", categoryarray=MONTH_ORDER),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-            font=dict(family="Arial", color="#0F172A")
+            legend=dict(orientation="h", yanchor="bottom", y=1.02,
+                        xanchor="right", x=1),
+            font=dict(family="Arial", color="#0F172A"),
+            hovermode="x unified"
         )
-        standard_fig.update_traces(hovertemplate="Month: %{x}<br>%{fullData.name}: %{y:.1f}%<extra></extra>")
-        with right:
-            st.plotly_chart(standard_fig, use_container_width=False,
-                            config={"responsive": False, "displaylogo": False, "scrollZoom": True},
-                            key="home_standards_chart")
- 
-        with st.expander("View filtered records", expanded=False):
+
+        chart_left, chart_right = st.columns(2, gap="large")
+        with chart_left:
+            st.plotly_chart(
+                monthly_visits_fig, use_container_width=True,
+                config={"responsive": True, "displaylogo": False, "scrollZoom": True},
+                key="home_monthly_visits_chart"
+            )
+        with chart_right:
+            st.plotly_chart(
+                standard_fig, use_container_width=True,
+                config={"responsive": True, "displaylogo": False, "scrollZoom": True},
+                key="home_standards_chart"
+            )
+
+        st.caption("Tip: hover over points or bars for details, use the legend to show/hide a series, and use the chart toolbar to zoom or download a chart.")
+        show_records = st.checkbox(
+            "Show filtered records", value=False, key="home_show_filtered_records"
+        )
+        if show_records:
             st.dataframe(filtered_df, use_container_width=True, hide_index=True)
             st.download_button(
                 "Download filtered data (CSV)",
@@ -971,7 +1043,8 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                 file_name="pim_filtered_data.csv", mime="text/csv",
                 use_container_width=True, key="download_filtered_csv"
             )
- 
+ #=================================================================================================================
+
     elif page == "Visits":
         st.title("School Visits Summary")
         try:
@@ -997,6 +1070,11 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                                "pim_visits_summary.csv", "text/csv")
         except Exception as exc:
             st.error(f"Unable to build the visit summary: {exc}")
+
+
+ 
+ #=================================================================================================================
+
  
     elif page == "Standards":
         st.title("Minimum Standards")
@@ -1018,6 +1096,8 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                 fig = stnadard_LF_graph(filtered_df)
                 st.pyplot(fig, use_container_width=True)
                 plt.close(fig)
+ #=================================================================================================================
+
  
     elif page == "Priority":
         st.title("Teacher Priority Areas")
@@ -1070,6 +1150,9 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                     st.info("No monthly priority data is available for this staff member.")
             else:
                 st.info("No staff records are available for the selected filters.")
+             
+ #=================================================================================================================
+
  
     elif page == "Reports":
         st.title("Reports & Exports")
