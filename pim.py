@@ -158,7 +158,7 @@ def df_long(df: pd.DataFrame) -> pd.DataFrame:
 #=======================================================================================================================================================
 #=======================================================================================================================================================
 
-def dashboard_metrics(df: pd.DataFrame) -> dict:
+def calculate_dashboard_metrics(df: pd.DataFrame) -> dict:
     visit_cols = [c for c in df.columns if c.startswith(VISIT_PREFIX)]
     standard_cols = [c for c in df.columns if c.startswith(STANDARD_PREFIX)]
     priority_cols = [c for c in df.columns if c.startswith(PRIORITY_PREFIX)]
@@ -1092,7 +1092,7 @@ def main():
         try:
             cleaned_df = data_clean(st.session_state.df)
             monthly_df = df_long(cleaned_df)
-            metrics = dashboard_metrics(cleaned_df)
+            metrics = calculate_dashboard_metrics(cleaned_df)
             apply_page_css()
             dashboard_page(cleaned_df, monthly_df, metrics)
         except Exception as exc:
