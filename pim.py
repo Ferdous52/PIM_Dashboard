@@ -155,21 +155,21 @@ def df_long(df: pd.DataFrame) -> pd.DataFrame:
         )
     return df_long
  
-#=======================================================================================================================================================
-#=======================================================================================================================================================
-
+#========================================================================================================================================================
+#========================================================================================================================================================
+ 
 def calculate_dashboard_metrics(df: pd.DataFrame) -> dict:
     visit_cols = [c for c in df.columns if c.startswith(VISIT_PREFIX)]
     standard_cols = [c for c in df.columns if c.startswith(STANDARD_PREFIX)]
     priority_cols = [c for c in df.columns if c.startswith(PRIORITY_PREFIX)]
     return {
         "total_staff": df["RtR Staff Name"].nunique() if "RtR Staff Name" in df else 0,
-        "total_schools": df["Project ID"].nunique() if "School Name" in df else 0,
+        "total_schools": df["School Name"].nunique() if "School Name" in df else 0,
         "total_teachers": df["Teacher Name"].nunique() if "Teacher Name" in df else 0,
         "total_visits": float(df[visit_cols].sum().sum()) if visit_cols else 0,
         "standard_rate": float(df[standard_cols].mean().mean() * 100) if standard_cols else 0,
-        "avg_priority": float(df[priority_cols].mean().mean()) if priority_cols else 0,}
- 
+        "avg_priority": float(df[priority_cols].mean().mean()) if priority_cols else 0,
+    }
  
  
 def monthly_visit_summary(df: pd.DataFrame) -> pd.DataFrame:
@@ -805,7 +805,7 @@ def upload_page():
                 st.error("Unable to read the Excel file.")
                 st.exception(exc)
  
-
+ 
 def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
     """Interactive dashboard with stable chart dimensions and global filters."""
     st.markdown("""
@@ -893,47 +893,86 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
         filtered_long_df = df_long(filtered_df)
     except Exception:
         filtered_long_df = long_df.copy()
-#==========================================================================================================================================================
-#                    Home Page 
-#==========================================================================================================================================================
-    st.markdown("""<style>h1, h2, h3 {color: black !important;}</style>""", unsafe_allow_html=True)
+ 
     if page == "Home":
-        st.markdown("""<style>.block-container {padding-top: 1rem;}</style>""", unsafe_allow_html=True)
-        cols = st.columns(6)
-        labels = [
-            ("Total Staff", metrics["total_staff"]),
-            ("Total Schools", metrics["total_schools"]),
-            ("Total Teachers", metrics["total_teachers"]),
-            ("Total School Visits", f'{metrics["total_visits"]:,.0f}'),
-            ("Standards Met", f'{metrics["standard_rate"]:.1f}%'),
-            ("Average Priority Score", f'{metrics["avg_priority"]:.2f}'),
+        st.title("PIM Overview")
+        st.caption("Project Implementation Monitoring · Interactive overview")
+        metric_values = [
+            ("Total Staff", f"{metrics['total_staff']:,}"),
+            ("Total Schools", f"{metrics['total_schools']:,}"),
+            ("Total Teachers", f"{metrics['total_teachers']:,}"),
+            ("Total School Visits", f"{metrics['total_visits']:,.0f}"),
+            ("Standards Met", f"{metrics['standard_rate']:.1f}%"),
+            ("Average Priority Score", f"{metrics['avg_priority']:.2f}"),
         ]
-        for col, (label, value) in zip(cols, labels):
-            col.metric(label, value)
-         
-        col1, col2, col3= st.columns(3)
-        
-        with col1:
-         fig = create_monthly_visit_chart(df)
-         st.pyplot(fig, use_container_width=True)
-         plt.close(fig)
-        
-        with col2:
-         fig = standard_graph(df)
-         st.pyplot(fig, use_container_width=True)
-         plt.close(fig)
-         
-        with col3:
-         teacher_table = priority_teacher_table(df)
-         fig = create_priority_chart(teacher_table)
-         st.pyplot(fig, use_container_width=True)
-         plt.close(fig)
-#==========================================================================================================================================================
-#                   Visits     
-#==========================================================================================================================================================
+        # Two rows of three cards are less cramped and more stable than six
+        # narrow cards in a single row when the sidebar opens/closes.
+        for row_start in (0, 3):
+            metric_cols = st.columns(3, gap="medium")
+            for col, (label, value) in zip(metric_cols, metric_values[row_start:row_start + 3]):
+                col.metric(label, value)
+ 
+        st.markdown('<div class="pim-section">Monthly performance</div>', unsafe_allow_html=True)
+        left, right = st.columns(2, gap="large")
+ 
+        monthly = monthly_visit_summary(filtered_df)
+        monthly = monthly.dropna(subset=["Month"])
+        monthly["Month"] = monthly["Month"].astype(str)
+        monthly_visits_fig = px.line(
+            monthly, x="Month", y="Total_Visit", markers=True,
+            title="Monthly School Visits", text="Total_Visit",
+            template="plotly_white"
+        )
+        monthly_visits_fig.update_traces(
+            line=dict(color="#0284C7", width=3), marker=dict(size=8),
+            texttemplate="%{text:,.0f}", textposition="top center",
+            hovertemplate="Month: %{x}<br>Visits: %{y:,.0f}<extra></extra>"
+        )
+        monthly_visits_fig.update_layout(
+            height=360, width=490, autosize=False, margin=dict(l=20, r=20, t=65, b=35),
+            title=dict(x=0.03), showlegend=False,
+            xaxis=dict(categoryorder="array", categoryarray=MONTH_ORDER),
+            yaxis=dict(title="Visits", rangemode="tozero", gridcolor="#E2E8F0"),
+            font=dict(family="Arial", color="#0F172A")
+        )
+        with left:
+            st.plotly_chart(monthly_visits_fig, use_container_width=False,
+                            config={"responsive": False, "displaylogo": False, "scrollZoom": True},
+                            key="home_monthly_visits_chart")
+ 
+        standards = standard_month(filtered_df).reset_index()
+        standards["Month"] = standards["Month"].astype(str)
+        standard_fig = px.bar(
+            standards, x="Month", y=["Meets Standard", "Does Not Meet"],
+            barmode="group", title="Minimum Standards by Month",
+            labels={"value": "Schools (%)", "variable": "Status", "Month": "Month"},
+            template="plotly_white", color_discrete_map={
+                "Meets Standard": "#059669", "Does Not Meet": "#F97316"
+            }
+        )
+        standard_fig.update_layout(
+            height=360, width=490, autosize=False, margin=dict(l=20, r=20, t=65, b=35),
+            title=dict(x=0.03), yaxis=dict(title="Percentage (%)", range=[0, 100], gridcolor="#E2E8F0"),
+            xaxis=dict(categoryorder="array", categoryarray=MONTH_ORDER),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            font=dict(family="Arial", color="#0F172A")
+        )
+        standard_fig.update_traces(hovertemplate="Month: %{x}<br>%{fullData.name}: %{y:.1f}%<extra></extra>")
+        with right:
+            st.plotly_chart(standard_fig, use_container_width=False,
+                            config={"responsive": False, "displaylogo": False, "scrollZoom": True},
+                            key="home_standards_chart")
+ 
+        with st.expander("View filtered records", expanded=False):
+            st.dataframe(filtered_df, use_container_width=True, hide_index=True)
+            st.download_button(
+                "Download filtered data (CSV)",
+                data=filtered_df.to_csv(index=False).encode("utf-8-sig"),
+                file_name="pim_filtered_data.csv", mime="text/csv",
+                use_container_width=True, key="download_filtered_csv"
+            )
  
     elif page == "Visits":
-        st.markdown("""<style>.block-container {padding-top: 0rem;}</style>""", unsafe_allow_html=True)
         st.title("School Visits Summary")
         try:
             visit_table = table_visit(filtered_df)
@@ -958,20 +997,8 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                                "pim_visits_summary.csv", "text/csv")
         except Exception as exc:
             st.error(f"Unable to build the visit summary: {exc}")
-#==========================================================================================================================================================
-#                   Standards     
-#==========================================================================================================================================================
+ 
     elif page == "Standards":
-        st.markdown("""<style>
-                       .block-container {padding-top: 0rem;}
-                       .block-container h1,
-                       .block-container h2,
-                       .block-container h3,
-                       .block-container p,
-                       .block-container label,
-                       .block-container span,
-                       .block-container div {color: black !important;}
-                       </style>""", unsafe_allow_html=True)
         st.title("Minimum Standards")
         tab1, tab2 = st.tabs(["Monthly standards", "Standards by staff"])
         with tab1:
@@ -991,23 +1018,12 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                 fig = stnadard_LF_graph(filtered_df)
                 st.pyplot(fig, use_container_width=True)
                 plt.close(fig)
-#==========================================================================================================================================================
-#                   Priority     
-#==========================================================================================================================================================
+ 
     elif page == "Priority":
-        st.markdown("""<style>
-                       .block-container {padding-top: 0rem;}
-                       .block-container h1,
-                       .block-container h2,
-                       .block-container h3,
-                       .block-container p,
-                       .block-container label,
-                       .block-container span,
-                       .block-container div {color: black !important;}
-                       </style>""", unsafe_allow_html=True)
-
         st.title("Teacher Priority Areas")
-        tab1, tab2, tab3, tab4, tab5 = st.tabs(["By standard", "Monthly trends", "By school", "By staff", "Teacher detail"])
+        tab1, tab2, tab3, tab4, tab5 = st.tabs([
+            "By standard", "Monthly trends", "By school", "By staff", "Teacher detail"
+        ])
         with tab1:
             left, right = st.columns([1, 2])
             with left:
@@ -1028,7 +1044,6 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                 fig = create_priority_chart(teacher_table)
                 st.pyplot(fig, use_container_width=True)
                 plt.close(fig)
-             
         with tab3:
             p_long = priority_long(filtered_df)
             left, right = st.columns(2)
@@ -1038,11 +1053,9 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
             with right:
                 st.markdown("**Grade 2 — priority areas by month**")
                 st.dataframe(priority_school_g2(filtered_df, p_long), use_container_width=True)
-             
         with tab4:
             p_long = priority_long(filtered_df)
             st.dataframe(priority_staff_table(p_long), use_container_width=True)
-         
         with tab5:
             staff_options = sorted(filtered_df["RtR Staff Name"].dropna().unique().tolist()) if "RtR Staff Name" in filtered_df else []
             if staff_options:
@@ -1057,11 +1070,8 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                     st.info("No monthly priority data is available for this staff member.")
             else:
                 st.info("No staff records are available for the selected filters.")
-#==========================================================================================================================================================
-#                   Reports      
-#==========================================================================================================================================================
+ 
     elif page == "Reports":
-        st.markdown("""<style>.block-container {padding-top: 0rem;}</style>""", unsafe_allow_html=True)
         st.title("Reports & Exports")
         st.caption("Export the records currently selected by the sidebar filters.")
         output = BytesIO()
@@ -1129,5 +1139,3 @@ def main():
  
 if __name__ == "__main__":
     main()
-
- 
