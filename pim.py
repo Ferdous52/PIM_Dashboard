@@ -983,10 +983,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
             with col:
                 st.metric(label, value)
 
-        st.markdown(
-            '<div class="pim-section">Monthly performance</div>',
-            unsafe_allow_html=True
-        )
+        st.markdown('<div class="pim-section">Monthly performance</div>',unsafe_allow_html=True)
         # Chart controls make the overview useful for quick comparisons.
         control1, control2, control3 = st.columns([1, 1, 2], gap="medium")
         with control1:
@@ -1501,8 +1498,8 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                        </style>""", unsafe_allow_html=True)
 
         st.title("Teacher Priority Areas")
-        tab1, tab2, tab3, tab4, tab5 = st.tabs([
-            "By standard", "Monthly trends", "By school", "By staff", "Teacher detail"
+        tab1, tab3, tab4, tab5 = st.tabs([
+            "By standard", "By school", "By staff", "Teacher detail"
         ])
         with tab1:
             left, right = st.columns([1, 2])
@@ -1515,15 +1512,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                     plt.close(fig)
                 else:
                     st.info("No priority-by-standard data is available for these filters.")
-        with tab2:
-            teacher_table = priority_teacher_table(filtered_df)
-            left, right = st.columns(2)
-            with left:
-                st.dataframe(teacher_table, use_container_width=True)
-            with right:
-                fig = create_priority_chart(teacher_table)
-                st.pyplot(fig, use_container_width=True)
-                plt.close(fig)
+
         with tab3:
             p_long = priority_long(filtered_df)
             left, right = st.columns(2)
