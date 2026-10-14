@@ -1007,9 +1007,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                        </style>""", unsafe_allow_html=True)
 
         st.title("Teacher Priority Areas")
-        tab1, tab2, tab3, tab4, tab5 = st.tabs([
-            "By standard", "Monthly trends", "By school", "By staff", "Teacher detail"
-        ])
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(["By standard", "Monthly trends", "By school", "By staff", "Teacher detail"])
         with tab1:
             left, right = st.columns([1, 2])
             with left:
@@ -1030,6 +1028,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                 fig = create_priority_chart(teacher_table)
                 st.pyplot(fig, use_container_width=True)
                 plt.close(fig)
+             
         with tab3:
             p_long = priority_long(filtered_df)
             left, right = st.columns(2)
@@ -1039,11 +1038,13 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
             with right:
                 st.markdown("**Grade 2 — priority areas by month**")
                 st.dataframe(priority_school_g2(filtered_df, p_long), use_container_width=True)
+             
         with tab4:
             p_long = priority_long(filtered_df)
             st.dataframe(priority_staff_table(p_long), use_container_width=True)
+         
         with tab5:
-            staff_options = sorted(filtered_df["RtR Staff Name"].dropna().unique().tolist()) if "RtR Staff Name" in filtered_df else []
+            staff_options = sorted(filtered_df)
             if staff_options:
                 chosen_staff = st.selectbox("Select staff member", staff_options, key="priority_teacher_detail_staff")
                 fig, plot_data = teacher_priority_heatmap(filtered_df, staff_name=chosen_staff)
@@ -1057,7 +1058,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
             else:
                 st.info("No staff records are available for the selected filters.")
 #==========================================================================================================================================================
-#                   Reports     
+#                   Reports      ["RtR Staff Name"].dropna().unique().tolist())
 #==========================================================================================================================================================
     elif page == "Reports":
         st.markdown("""<style>.block-container {padding-top: 0rem;}</style>""", unsafe_allow_html=True)
