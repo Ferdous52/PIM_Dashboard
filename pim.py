@@ -158,11 +158,11 @@ def df_long(df: pd.DataFrame) -> pd.DataFrame:
 #=======================================================================================================================================================
 #=======================================================================================================================================================
 
- def dashboard_metrics(df: pd.DataFrame) -> dict:
-     visit_cols = [c for c in df.columns if c.startswith(VISIT_PREFIX)]
-     standard_cols = [c for c in df.columns if c.startswith(STANDARD_PREFIX)]
-     priority_cols = [c for c in df.columns if c.startswith(PRIORITY_PREFIX)]
-     return {
+def dashboard_metrics(df: pd.DataFrame) -> dict:
+    visit_cols = [c for c in df.columns if c.startswith(VISIT_PREFIX)]
+    standard_cols = [c for c in df.columns if c.startswith(STANDARD_PREFIX)]
+    priority_cols = [c for c in df.columns if c.startswith(PRIORITY_PREFIX)]
+    return {
         "total_staff": df["RtR Staff Name"].nunique() if "RtR Staff Name" in df else 0,
         "total_schools": df["Project ID"].nunique() if "School Name" in df else 0,
         "total_teachers": df["Teacher Name"].nunique() if "Teacher Name" in df else 0,
