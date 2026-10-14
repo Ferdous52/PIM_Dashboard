@@ -158,8 +158,8 @@ def df_long(df: pd.DataFrame) -> pd.DataFrame:
 #========================================================================================================================================================
 #========================================================================================================================================================
 
-df = data_clean(raw_df)
-df1 = df_long(df)
+#df = data_clean(raw_df)
+#df1 = df_long(df)
 
 #========================================================================================================================================================
 
@@ -813,7 +813,8 @@ def upload_page():
                 st.error("Unable to read the Excel file.")
                 st.exception(exc)
  
- 
+df = data_clean(raw_df)
+df1 = df_long(df) 
 def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
     """Interactive dashboard with stable chart dimensions and global filters."""
     st.markdown("""
