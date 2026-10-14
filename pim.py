@@ -168,8 +168,7 @@ def df_long(df: pd.DataFrame) -> pd.DataFrame:
         "total_teachers": df["Teacher Name"].nunique() if "Teacher Name" in df else 0,
         "total_visits": float(df[visit_cols].sum().sum()) if visit_cols else 0,
         "standard_rate": float(df[standard_cols].mean().mean() * 100) if standard_cols else 0,
-        "avg_priority": float(df[priority_cols].mean().mean()) if priority_cols else 0,
-    }
+        "avg_priority": float(df[priority_cols].mean().mean()) if priority_cols else 0,}
  
  
  
