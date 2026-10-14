@@ -1044,7 +1044,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
             st.dataframe(priority_staff_table(p_long), use_container_width=True)
          
         with tab5:
-            staff_options = sorted(filtered_df)
+            staff_options = sorted(filtered_df["RtR Staff Name"].dropna().unique().tolist()) if "RtR Staff Name" in filtered_df else []
             if staff_options:
                 chosen_staff = st.selectbox("Select staff member", staff_options, key="priority_teacher_detail_staff")
                 fig, plot_data = teacher_priority_heatmap(filtered_df, staff_name=chosen_staff)
@@ -1058,7 +1058,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
             else:
                 st.info("No staff records are available for the selected filters.")
 #==========================================================================================================================================================
-#                   Reports      ["RtR Staff Name"].dropna().unique().tolist())
+#                   Reports      
 #==========================================================================================================================================================
     elif page == "Reports":
         st.markdown("""<style>.block-container {padding-top: 0rem;}</style>""", unsafe_allow_html=True)
