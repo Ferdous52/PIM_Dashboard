@@ -923,7 +923,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
 
  
     if page == "Home":
-        st.markdown("""<style>.block-container {padding-top: .5rem;}</style>""", unsafe_allow_html=True)
+        st.markdown("""<style>.block-container {padding-top: 1em;}</style>""", unsafe_allow_html=True)
 
         # Six KPI cards in one row on wide screens.
         metric_values = [
