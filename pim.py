@@ -1094,7 +1094,7 @@ def main():
         try:
             cleaned_df = data_clean(st.session_state.df)
             monthly_df = df_long(cleaned_df)
-            metrics = calculate_dashboard_metrics(cleaned_df)
+            metrics = dashboard_metrics(cleaned_df)
             apply_page_css()
             dashboard_page(cleaned_df, monthly_df, metrics)
         except Exception as exc:
