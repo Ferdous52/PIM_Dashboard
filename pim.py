@@ -164,7 +164,7 @@ def calculate_dashboard_metrics(df: pd.DataFrame) -> dict:
     priority_cols = [c for c in df.columns if c.startswith(PRIORITY_PREFIX)]
     return {
         "total_staff": df["RtR Staff Name"].nunique() if "RtR Staff Name" in df else 0,
-        "total_schools": df["School Name"].nunique() if "School Name" in df else 0,
+        "total_schools": df["Project ID"].nunique() if "School Name" in df else 0,
         "total_teachers": df["Teacher Name"].nunique() if "Teacher Name" in df else 0,
         "total_visits": float(df[visit_cols].sum().sum()) if visit_cols else 0,
         "standard_rate": float(df[standard_cols].mean().mean() * 100) if standard_cols else 0,
