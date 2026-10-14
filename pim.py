@@ -902,8 +902,9 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
         filtered_long_df = long_df.copy()
 #=================================================================================================================
 
- 
+     
     if page == "Home":
+        st.markdown("""<style>.block-container {padding-top: .5rem;}</style>""", unsafe_allow_html=True)
         st.title("PIM Overview")
         st.caption("Project Implementation Monitoring · Interactive overview")
 
@@ -921,25 +922,18 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
             with col:
                 st.metric(label, value)
 
-        st.markdown(
-            '<div class="pim-section">Monthly performance</div>',
-            unsafe_allow_html=True
-        )
+        st.markdown('<div class="pim-section">Monthly performance</div>',unsafe_allow_html=True)
         # Chart controls make the overview useful for quick comparisons.
         control1, control2, control3 = st.columns([1, 1, 2], gap="medium")
+     
         with control1:
-            visit_chart_type = st.selectbox(
-                "Visits chart", ["Line", "Bar"], key="home_visit_chart_type"
-            )
+            visit_chart_type = st.selectbox("Visits chart", ["Line", "Bar"], key="home_visit_chart_type")
+         
         with control2:
-            standards_chart_mode = st.selectbox(
-                "Standards chart", ["Grouped bars", "Stacked bars", "Line"],
-                key="home_standards_chart_mode"
-            )
+            standards_chart_mode = st.selectbox("Standards chart", ["Grouped bars", "Stacked bars", "Line"],key="home_standards_chart_mode"
+                                               )
         with control3:
-            show_monthly_values = st.checkbox(
-                "Show values on charts", value=True, key="home_show_chart_values"
-            )
+            show_monthly_values = st.checkbox("Show values on charts", value=True, key="home_show_chart_values")
 
         monthly = monthly_visit_summary(filtered_df).dropna(subset=["Month"]).copy()
         monthly["Month"] = monthly["Month"].astype(str)
@@ -1046,6 +1040,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
  #=================================================================================================================
 
     elif page == "Visits":
+        st.markdown("""<style>.block-container {padding-top: 0rem;}</style>""", unsafe_allow_html=True)
         st.title("School Visits Summary")
         try:
             visit_table = table_visit(filtered_df)
@@ -1077,6 +1072,17 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
 
  
     elif page == "Standards":
+        st.markdown("""<style>
+                       .block-container {padding-top: 0rem;}
+                       .block-container h1,
+                       .block-container h2,
+                       .block-container h3,
+                       .block-container p,
+                       .block-container label,
+                       .block-container span,
+                       .block-container div {color: black !important;}
+                       </style>""", unsafe_allow_html=True)
+
         st.title("Minimum Standards")
         tab1, tab2 = st.tabs(["Monthly standards", "Standards by staff"])
         with tab1:
@@ -1100,6 +1106,17 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
 
  
     elif page == "Priority":
+        st.markdown("""<style>
+                       .block-container {padding-top: 0rem;}
+                       .block-container h1,
+                       .block-container h2,
+                       .block-container h3,
+                       .block-container p,
+                       .block-container label,
+                       .block-container span,
+                       .block-container div {color: black !important;}
+                       </style>""", unsafe_allow_html=True)
+
         st.title("Teacher Priority Areas")
         tab1, tab2, tab3, tab4, tab5 = st.tabs([
             "By standard", "Monthly trends", "By school", "By staff", "Teacher detail"
@@ -1155,6 +1172,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
 
  
     elif page == "Reports":
+        st.markdown("""<style>.block-container {padding-top: 0rem;}</style>""", unsafe_allow_html=True)
         st.title("Reports & Exports")
         st.caption("Export the records currently selected by the sidebar filters.")
         output = BytesIO()
