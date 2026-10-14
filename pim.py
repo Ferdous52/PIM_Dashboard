@@ -923,8 +923,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
 
  
     if page == "Home":
-        st.title("PIM Overview")
-        st.caption("Project Implementation Monitoring · Interactive overview")
+        st.markdown("""<style>.block-container {padding-top: .5rem;}</style>""", unsafe_allow_html=True)
 
         # Six KPI cards in one row on wide screens.
         metric_values = [
@@ -1082,6 +1081,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
  #=================================================================================================================
 
     elif page == "Visits":
+        st.markdown("""<style>.block-container {padding-top: 0rem;}</style>""", unsafe_allow_html=True)
         st.title("School Visits Summary")
         try:
             visit_table = table_visit(filtered_df)
@@ -1113,6 +1113,17 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
 
  
     elif page == "Standards":
+        st.markdown("""<style>
+                       .block-container {padding-top: 0rem;}
+                       .block-container h1,
+                       .block-container h2,
+                       .block-container h3,
+                       .block-container p,
+                       .block-container label,
+                       .block-container span,
+                       .block-container div {color: black !important;}
+                       </style>""", unsafe_allow_html=True)
+
         st.title("Minimum Standards")
         tab1, tab2 = st.tabs(["Monthly standards", "Standards by staff"])
         with tab1:
@@ -1136,6 +1147,17 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
 
  
     elif page == "Priority":
+        st.markdown("""<style>
+                       .block-container {padding-top: 0rem;}
+                       .block-container h1,
+                       .block-container h2,
+                       .block-container h3,
+                       .block-container p,
+                       .block-container label,
+                       .block-container span,
+                       .block-container div {color: black !important;}
+                       </style>""", unsafe_allow_html=True)
+
         st.title("Teacher Priority Areas")
         tab1, tab2, tab3, tab4, tab5 = st.tabs([
             "By standard", "Monthly trends", "By school", "By staff", "Teacher detail"
@@ -1191,6 +1213,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
 
  
     elif page == "Reports":
+        st.markdown("""<style>.block-container {padding-top: 0rem;}</style>""", unsafe_allow_html=True)
         st.title("Reports & Exports")
         st.caption("Export the records currently selected by the sidebar filters.")
         output = BytesIO()
