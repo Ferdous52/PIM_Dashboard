@@ -245,7 +245,438 @@ def create_monthly_visit_chart(df: pd.DataFrame):
  
     fig.tight_layout()
     return fig
- 
+
+#### Home Page 3 graph
+
+def render_monthly_visits_chart(
+    filtered_df,
+    key_prefix="home",
+    show_values=True
+):
+    monthly = monthly_visit_summary(filtered_df).dropna(
+        subset=["Month"]
+    ).copy()
+
+    if monthly.empty:
+        st.info("No monthly school visit data is available.")
+        return
+
+    monthly["Month"] = monthly["Month"].astype(str)
+
+    chart_type = st.selectbox(
+        "Visits chart",
+        ["Line", "Bar"],
+        key=f"{key_prefix}_visit_chart_type"
+    )
+
+    if chart_type == "Line":
+        fig = px.line(
+            monthly,
+            x="Month",
+            y="Total_Visit",
+            markers=True,
+            title="Monthly School Visits",
+            template="plotly_white"
+        )
+
+        fig.update_traces(
+            line=dict(color="#0284C7", width=3),
+            marker=dict(size=8),
+            text=monthly["Total_Visit"] if show_values else None,
+            texttemplate="%{text:,.0f}" if show_values else None,
+            textposition="top center",
+            hovertemplate=(
+                "Month: %{x}<br>"
+                "Visits: %{y:,.0f}<extra></extra>"
+            )
+        )
+
+    else:
+        fig = px.bar(
+            monthly,
+            x="Month",
+            y="Total_Visit",
+            title="Monthly School Visits",
+            template="plotly_white",
+            text="Total_Visit" if show_values else None,
+            color_discrete_sequence=["#0284C7"]
+        )
+
+        fig.update_traces(
+            texttemplate="%{text:,.0f}" if show_values else None,
+            hovertemplate=(
+                "Month: %{x}<br>"
+                "Visits: %{y:,.0f}<extra></extra>"
+            )
+        )
+
+    fig.update_layout(
+        height=390,
+        autosize=True,
+        margin=dict(l=20, r=20, t=65, b=35),
+        title=dict(x=0.03),
+        showlegend=False,
+        xaxis=dict(
+            categoryorder="array",
+            categoryarray=MONTH_ORDER
+        ),
+        yaxis=dict(
+            title="Visits",
+            rangemode="tozero",
+            gridcolor="#E2E8F0"
+        ),
+        font=dict(family="Arial", color="#0F172A"),
+        hovermode="x unified"
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        config={
+            "responsive": True,
+            "displaylogo": False,
+            "scrollZoom": True
+        },
+        key=f"{key_prefix}_monthly_visits_chart"
+    )
+
+
+def render_standards_chart(
+    filtered_df,
+    key_prefix="home",
+    show_values=True
+):
+    standards = standard_month(filtered_df).reset_index()
+
+    if standards.empty:
+        st.info("No monthly standards data is available.")
+        return
+
+    standards["Month"] = standards["Month"].astype(str)
+
+    required_columns = ["Meets Standard", "Does Not Meet"]
+    missing = [
+        col for col in required_columns
+        if col not in standards.columns
+    ]
+
+    if missing:
+        st.warning(f"Missing standards columns: {missing}")
+        return
+
+    standards_long = standards.melt(
+        id_vars="Month",
+        value_vars=required_columns,
+        var_name="Status",
+        value_name="Percentage"
+    )
+
+    chart_mode = st.selectbox(
+        "Standards chart",
+        ["Grouped bars", "Stacked bars", "Line"],
+        key=f"{key_prefix}_standards_chart_mode"
+    )
+
+    colors = {
+        "Meets Standard": "#059669",
+        "Does Not Meet": "#F97316"
+    }
+
+    if chart_mode == "Line":
+        fig = px.line(
+            standards_long,
+            x="Month",
+            y="Percentage",
+            color="Status",
+            markers=True,
+            title="Minimum Standards by Month",
+            template="plotly_white",
+            color_discrete_map=colors
+        )
+
+    else:
+        fig = px.bar(
+            standards_long,
+            x="Month",
+            y="Percentage",
+            color="Status",
+            barmode=(
+                "group" if chart_mode == "Grouped bars"
+                else "stack"
+            ),
+            title="Minimum Standards by Month",
+            template="plotly_white",
+            color_discrete_map=colors
+        )
+
+    if show_values:
+        fig.update_traces(
+            texttemplate="%{y:.0f}%",
+            textposition=(
+                "outside" if chart_mode != "Line" else "top center"
+            )
+        )
+
+    fig.update_traces(
+        hovertemplate=(
+            "Month: %{x}<br>"
+            "%{fullData.name}: %{y:.1f}%<extra></extra>"
+        )
+    )
+
+    fig.update_layout(
+        height=390,
+        autosize=True,
+        margin=dict(l=20, r=20, t=65, b=35),
+        title=dict(x=0.03),
+        yaxis=dict(
+            title="Percentage (%)",
+            range=[0, 105 if show_values else 100],
+            gridcolor="#E2E8F0"
+        ),
+        xaxis=dict(
+            categoryorder="array",
+            categoryarray=MONTH_ORDER
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        ),
+        font=dict(family="Arial", color="#0F172A"),
+        hovermode="x unified"
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        config={
+            "responsive": True,
+            "displaylogo": False,
+            "scrollZoom": True
+        },
+        key=f"{key_prefix}_standards_chart"
+    )
+
+
+
+def render_priority_chart(
+    filtered_df,
+    key_prefix="home"
+):
+    priority_table = priority_teacher_table(filtered_df)
+
+    if priority_table.empty:
+        st.info("No teacher priority data is available.")
+        return
+
+    priority_values = priority_table.copy()
+
+    priority_cols = [f"Priority_{i}" for i in range(4)]
+
+    for col in priority_cols:
+        if col not in priority_values.columns:
+            priority_values[col] = 0
+
+        priority_values[col] = pd.to_numeric(
+            priority_values[col]
+            .astype(str)
+            .str.replace("%", "", regex=False),
+            errors="coerce"
+        ).fillna(0)
+
+    priority_values.index.name = "Month"
+    priority_values = priority_values.reset_index()
+    priority_values["Month"] = priority_values["Month"].astype(str)
+
+    priority_values["_month_order"] = (
+        priority_values["Month"].map(
+            {month: i for i, month in enumerate(MONTH_ORDER)}
+        )
+    )
+
+    priority_values = (
+        priority_values
+        .sort_values("_month_order")
+        .drop(columns="_month_order")
+    )
+
+    control1, control2, control3 = st.columns(3)
+
+    with control1:
+        priority_view = st.selectbox(
+            "Chart style",
+            ["Trend lines", "Stacked area", "Stacked bars"],
+            key=f"{key_prefix}_priority_view"
+        )
+
+    with control2:
+        priority_focus = st.selectbox(
+            "Priority area",
+            [
+                "All priorities",
+                "Priority 0",
+                "Priority 1",
+                "Priority 2",
+                "Priority 3"
+            ],
+            key=f"{key_prefix}_priority_focus"
+        )
+
+    with control3:
+        priority_metric = st.selectbox(
+            "Display metric",
+            ["Percentage (%)", "Teacher records"],
+            key=f"{key_prefix}_priority_metric"
+        )
+
+    priority_labels = {
+        "Priority_0": "Priority 0",
+        "Priority_1": "Priority 1",
+        "Priority_2": "Priority 2",
+        "Priority_3": "Priority 3"
+    }
+
+    priority_long_df = priority_values.melt(
+        id_vars="Month",
+        value_vars=priority_cols,
+        var_name="Priority",
+        value_name="Percentage"
+    )
+
+    priority_long_df["Priority"] = (
+        priority_long_df["Priority"].map(priority_labels)
+    )
+
+    if priority_metric == "Teacher records":
+        month_counts = {}
+
+        for month in MONTH_ORDER:
+            col = f"{PRIORITY_STUB}_{month}"
+
+            if col in filtered_df.columns:
+                month_counts[month] = int(
+                    pd.to_numeric(
+                        filtered_df[col],
+                        errors="coerce"
+                    ).isin([0, 1, 2, 3]).sum()
+                )
+            else:
+                month_counts[month] = 0
+
+        priority_long_df["Records"] = (
+            priority_long_df.apply(
+                lambda row: (
+                    row["Percentage"]
+                    * month_counts.get(row["Month"], 0)
+                    / 100
+                ),
+                axis=1
+            )
+        )
+
+        y_col = "Records"
+        y_title = "Estimated teacher records"
+
+    else:
+        y_col = "Percentage"
+        y_title = "Share of teachers (%)"
+
+    if priority_focus != "All priorities":
+        priority_long_df = priority_long_df[
+            priority_long_df["Priority"] == priority_focus
+        ]
+
+    if priority_long_df.empty:
+        st.info("No priority values are available for this selection.")
+        return
+
+    colors = {
+        "Priority 0": "#64748B",
+        "Priority 1": "#0EA5E9",
+        "Priority 2": "#8B5CF6",
+        "Priority 3": "#F59E0B"
+    }
+
+    if priority_view == "Stacked area" and priority_focus == "All priorities":
+        fig = px.area(
+            priority_long_df,
+            x="Month",
+            y=y_col,
+            color="Priority",
+            title="Monthly Distribution of Teacher Priority Areas",
+            template="plotly_white",
+            category_orders={"Month": MONTH_ORDER},
+            color_discrete_map=colors
+        )
+
+    elif priority_view == "Stacked bars" and priority_focus == "All priorities":
+        fig = px.bar(
+            priority_long_df,
+            x="Month",
+            y=y_col,
+            color="Priority",
+            barmode="stack",
+            title="Monthly Distribution of Teacher Priority Areas",
+            template="plotly_white",
+            category_orders={"Month": MONTH_ORDER},
+            color_discrete_map=colors
+        )
+
+    else:
+        fig = px.line(
+            priority_long_df,
+            x="Month",
+            y=y_col,
+            color="Priority",
+            markers=True,
+            title="Monthly Teacher Priority Trends",
+            template="plotly_white",
+            category_orders={"Month": MONTH_ORDER},
+            color_discrete_map=colors
+        )
+
+    fig.update_layout(
+        height=440,
+        autosize=True,
+        margin=dict(l=20, r=20, t=70, b=35),
+        title=dict(x=0.03),
+        xaxis=dict(
+            title="Month",
+            categoryorder="array",
+            categoryarray=MONTH_ORDER
+        ),
+        yaxis=dict(
+            title=y_title,
+            gridcolor="#E2E8F0",
+            rangemode="tozero"
+        ),
+        legend=dict(
+            title="Priority area",
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="left",
+            x=0
+        ),
+        font=dict(family="Arial", color="#0F172A"),
+        hovermode="x unified"
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        config={
+            "responsive": True,
+            "displaylogo": False,
+            "scrollZoom": True
+        },
+        key=f"{key_prefix}_priority_chart"
+    )
+
+
 # ============================================================
 # 3. VISITS ANALYSIS FUNCTIONS
 # ============================================================
@@ -971,353 +1402,42 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
 
  
     if page == "Home":
-        st.markdown("""<style>.block-container {padding-top: 1em;}</style>""", unsafe_allow_html=True)
+        st.markdown("""<style>.block-container {padding-top: 1em;}</style>""",unsafe_allow_html=True)
 
-        metric_values = [
-            ("Total Staff", f"{metrics['total_staff']:,}"),
-            ("Total Schools", f"{metrics['total_schools']:,}"),
-            ("Total Teachers", f"{metrics['total_teachers']:,}"),
-            ("Total School Visits", f"{metrics['total_visits']:,.0f}"),
-            ("Standards Met", f"{metrics['standard_rate']:.1f}%"),
-            ("Average Priority", f"{metrics['avg_priority']:.2f}"),
-        ]
+    # Dashboard metrics
+        metric_values = [("Total Staff", f"{metrics['total_staff']:,}"),
+                         ("Total Schools", f"{metrics['total_schools']:,}"),
+                         ("Total Teachers", f"{metrics['total_teachers']:,}"),
+                         ("Total School Visits", f"{metrics['total_visits']:,.0f}"),
+                         ("Standards Met", f"{metrics['standard_rate']:.1f}%"),
+                         ("Average Priority", f"{metrics['avg_priority']:.2f}"),]
+    
         metric_cols = st.columns(6, gap="small")
+    
         for col, (label, value) in zip(metric_cols, metric_values):
             with col:
                 st.metric(label, value)
-
-        st.markdown('<div class="pim-section">Monthly performance</div>',unsafe_allow_html=True)
-        # Chart controls make the overview useful for quick comparisons.
-        control1, control2, control3 = st.columns([1, 1, 2], gap="large")
-        with control1:
-            visit_chart_type = st.selectbox("Visits chart", ["Line", "Bar"], key="home_visit_chart_type")
-         
-        with control2:
-            standards_chart_mode = st.selectbox("Standards chart", ["Grouped bars", "Stacked bars", "Line"],key="home_standards_chart_mode")
-         
-        with control3:
-            show_monthly_values = st.checkbox("Show values on charts", value=True, key="home_show_chart_values")
-
-        monthly = monthly_visit_summary(filtered_df).dropna(subset=["Month"]).copy()
-        monthly["Month"] = monthly["Month"].astype(str)
-        if visit_chart_type == "Line":
-            monthly_visits_fig = px.line(
-                monthly, x="Month", y="Total_Visit", markers=True,
-                title="Monthly School Visits", template="plotly_white"
-            )
-            monthly_visits_fig.update_traces(
-                line=dict(color="#0284C7", width=3), marker=dict(size=8),
-                text=monthly["Total_Visit"] if show_monthly_values else None,
-                texttemplate="%{text:,.0f}" if show_monthly_values else None,
-                textposition="top center",
-                hovertemplate="Month: %{x}<br>Visits: %{y:,.0f}<extra></extra>"
-            )
-        else:
-            monthly_visits_fig = px.bar(
-                monthly, x="Month", y="Total_Visit",
-                title="Monthly School Visits", template="plotly_white",
-                text="Total_Visit" if show_monthly_values else None,
-                color_discrete_sequence=["#0284C7"]
-            )
-            monthly_visits_fig.update_traces(
-                texttemplate="%{text:,.0f}" if show_monthly_values else None,
-                hovertemplate="Month: %{x}<br>Visits: %{y:,.0f}<extra></extra>"
-            )
-        monthly_visits_fig.update_layout(
-            height=390, autosize=True, margin=dict(l=20, r=20, t=65, b=35),
-            title=dict(x=0.03), showlegend=False,
-            xaxis=dict(categoryorder="array", categoryarray=MONTH_ORDER),
-            yaxis=dict(title="Visits", rangemode="tozero", gridcolor="#E2E8F0"),
-            font=dict(family="Arial", color="#0F172A"),
-            hovermode="x unified"
-        )
-
-        standards = standard_month(filtered_df).reset_index()
-        standards["Month"] = standards["Month"].astype(str)
-        standards_long = standards.melt(
-            id_vars="Month",
-            value_vars=["Meets Standard", "Does Not Meet"],
-            var_name="Status", value_name="Percentage"
-        )
-        if standards_chart_mode == "Line":
-            standard_fig = px.line(
-                standards_long, x="Month", y="Percentage", color="Status",
-                markers=True, title="Minimum Standards by Month",
-                template="plotly_white",
-                color_discrete_map={
-                    "Meets Standard": "#059669", "Does Not Meet": "#F97316"
-                }
-            )
-        else:
-            standard_fig = px.bar(
-                standards_long, x="Month", y="Percentage", color="Status",
-                barmode="group" if standards_chart_mode == "Grouped bars" else "stack",
-                title="Minimum Standards by Month", template="plotly_white",
-                color_discrete_map={
-                    "Meets Standard": "#059669", "Does Not Meet": "#F97316"
-                }
-            )
-        standard_fig.update_traces(
-            texttemplate="%{y:.0f}%" if show_monthly_values else None,
-            textposition="outside" if show_monthly_values and standards_chart_mode != "Line" else None,
-            hovertemplate="Month: %{x}<br>%{fullData.name}: %{y:.1f}%<extra></extra>"
-        )
-        standard_fig.update_layout(
-            height=390, autosize=True, margin=dict(l=20, r=20, t=65, b=35),
-            title=dict(x=0.03),
-            yaxis=dict(title="Percentage (%)", range=[0, 105 if show_monthly_values else 100],
-                       gridcolor="#E2E8F0"),
-            xaxis=dict(categoryorder="array", categoryarray=MONTH_ORDER),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02,
-                        xanchor="right", x=1),
-            font=dict(family="Arial", color="#0F172A"),
-            hovermode="x unified"
-        )
-
+    
+        # Shared chart value control
+        show_monthly_values = st.checkbox("Show values on charts",value=True,key="home_show_chart_values")
+    
+        # Graph 1 and Graph 2
         chart_left, chart_right = st.columns(2, gap="large")
+    
         with chart_left:
-            st.plotly_chart(
-                monthly_visits_fig, use_container_width=True,
-                config={"responsive": True, "displaylogo": False, "scrollZoom": True},
-                key="home_monthly_visits_chart"
-            )
+            render_monthly_visits_chart(filtered_df,
+                                        key_prefix="home",
+                                        show_values=show_monthly_values)
+    
         with chart_right:
-            st.plotly_chart(
-                standard_fig, use_container_width=True,
-                config={"responsive": True, "displaylogo": False, "scrollZoom": True},
-                key="home_standards_chart"
-            )
+            render_standards_chart(filtered_df,
+                                   key_prefix="home",
+                                   show_values=show_monthly_values)
+    
+        # Graph 3
+        st.markdown('<div class="pim-section">Teacher Priority Insights</div>',unsafe_allow_html=True)
+        render_priority_chart(filtered_df,key_prefix="home")
 
-        st.caption("Tip: hover over points or bars for details, use the legend to show/hide a series, and use the chart toolbar to zoom or download a chart.")
-
-        # Interactive priority analysis on the Home page
-        st.markdown(
-            '<div class="pim-section">Teacher Priority Insights</div>',
-            unsafe_allow_html=True
-        )
-
-        try:
-            priority_table = priority_teacher_table(filtered_df)
-
-            if priority_table.empty:
-                st.info(
-                    "No teacher priority data is available "
-                    "for the selected filters."
-                )
-            else:
-                priority_values = priority_table.copy()
-
-                priority_cols = [
-                    f"Priority_{i}" for i in range(4)
-                ]
-
-                for col in priority_cols:
-                    if col not in priority_values.columns:
-                        priority_values[col] = 0
-
-                    priority_values[col] = pd.to_numeric(
-                        priority_values[col]
-                        .astype(str)
-                        .str.replace("%", "", regex=False),
-                        errors="coerce"
-                    ).fillna(0)
-
-                priority_values.index.name = "Month"
-                priority_values = priority_values.reset_index()
-                priority_values["Month"] = (
-                    priority_values["Month"].astype(str)
-                )
-
-                priority_values["_month_order"] = (
-                    priority_values["Month"].map(
-                        {
-                            month: i
-                            for i, month in enumerate(MONTH_ORDER)
-                        }
-                    )
-                )
-
-                priority_values = (
-                    priority_values
-                    .sort_values("_month_order")
-                    .drop(columns="_month_order")
-                )
-
-                # Chart controls
-                control1, control2, control3 = st.columns(3)
-
-                with control1:
-                    priority_view = st.selectbox(
-                        "Chart style",
-                        [
-                            "Trend lines",
-                            "Stacked area",
-                            "Stacked bars"
-                        ],
-                        key="home_priority_view"
-                    )
-
-                with control2:
-                    priority_focus = st.selectbox(
-                        "Priority area",
-                        [
-                            "All priorities",
-                            "Priority 0",
-                            "Priority 1",
-                            "Priority 2",
-                            "Priority 3"
-                        ],
-                        key="home_priority_focus"
-                    )
-
-                with control3:
-                    priority_metric = st.selectbox(
-                        "Display metric",
-                        [
-                            "Percentage (%)",
-                            "Teacher records"
-                        ],
-                        key="home_priority_metric"
-                    )
-
-                # Convert the monthly percentages into a long-format dataset.
-                priority_long_df = priority_values.melt(
-                    id_vars="Month",
-                    value_vars=priority_cols,
-                    var_name="Priority",
-                    value_name="Percentage"
-                )
-
-                priority_labels = {
-                    "Priority_0": "Priority 0",
-                    "Priority_1": "Priority 1",
-                    "Priority_2": "Priority 2",
-                    "Priority_3": "Priority 3",
-                }
-
-                priority_long_df["Priority"] = (
-                    priority_long_df["Priority"].map(priority_labels)
-                )
-
-                # The original table stores percentages, not raw counts.
-                # Use percentages directly for percentage mode. For count
-                # mode, estimate counts from available monthly records.
-                if priority_metric == "Teacher records":
-                    monthly_totals = (
-                        filtered_df[[col for col in filtered_df.columns if col.startswith(PRIORITY_STUB + "_")]].apply(pd.to_numeric, errors="coerce"))
-
-                    month_counts = {}
-
-                    for month in MONTH_ORDER:
-                        col = f"{PRIORITY_STUB}_{month}"
-
-                        if col in filtered_df.columns:
-                            month_counts[month] = int(pd.to_numeric(filtered_df[col],errors="coerce").isin([0, 1, 2, 3]).sum())
-                        else:
-                            month_counts[month] = 0
-
-                    priority_long_df["Records"] = (priority_long_df.apply(lambda row: (row["Percentage"]* month_counts.get(row["Month"], 0)/ 100),axis=1))
-                    y_col = "Records"
-                    y_title = "Estimated teacher records"
-                else:
-                    y_col = "Percentage"
-                    y_title = "Share of teachers (%)"
-
-                if priority_focus != "All priorities":
-                    priority_long_df = priority_long_df[
-                        priority_long_df["Priority"] == priority_focus
-                    ]
-
-                if priority_view == "Stacked area" and priority_focus == "All priorities":
-                    priority_fig = px.area(
-                        priority_long_df,
-                        x="Month",
-                        y=y_col,
-                        color="Priority",
-                        title="Monthly Distribution of Teacher Priority Areas",
-                        template="plotly_white",
-                        category_orders={"Month": MONTH_ORDER},
-                        color_discrete_map={
-                            "Priority 0": "#64748B",
-                            "Priority 1": "#0EA5E9",
-                            "Priority 2": "#8B5CF6",
-                            "Priority 3": "#F59E0B",
-                        }
-                    )
-
-                elif priority_view == "Stacked bars" and priority_focus == "All priorities":
-                    priority_fig = px.bar(
-                        priority_long_df,
-                        x="Month",
-                        y=y_col,
-                        color="Priority",
-                        barmode="stack",
-                        title="Monthly Distribution of Teacher Priority Areas",
-                        template="plotly_white",
-                        category_orders={"Month": MONTH_ORDER},
-                        color_discrete_map={
-                            "Priority 0": "#64748B",
-                            "Priority 1": "#0EA5E9",
-                            "Priority 2": "#8B5CF6",
-                            "Priority 3": "#F59E0B",
-                        }
-                    )
-
-                else:
-                    priority_fig = px.line(
-                        priority_long_df,
-                        x="Month",
-                        y=y_col,
-                        color="Priority",
-                        markers=True,
-                        title="Monthly Teacher Priority Trends",
-                        template="plotly_white",
-                        category_orders={"Month": MONTH_ORDER},
-                        color_discrete_map={
-                            "Priority 0": "#64748B",
-                            "Priority 1": "#0EA5E9",
-                            "Priority 2": "#8B5CF6",
-                            "Priority 3": "#F59E0B",
-                        }
-                    )
-
-                priority_fig.update_layout(height=440,autosize=True,margin=dict(l=20, r=20, t=70, b=35),title=dict(x=0.03),xaxis=dict(title="Month",categoryorder="array",categoryarray=MONTH_ORDER),
-                    yaxis=dict(title=y_title,gridcolor="#E2E8F0",rangemode="tozero"),
-                    legend=dict(title="Priority area",orientation="h",yanchor="bottom",y=1.02,xanchor="left",x=0),
-                    font=dict(family="Arial", color="#0F172A"),
-                    hovermode="x unified"
-                )
-
-                st.plotly_chart(priority_fig,use_container_width=True,config={"responsive": True,"displaylogo": False,"scrollZoom": True},key="home_interactive_priority_chart")
-
-                # Priority insights
-                st.markdown("**Priority insights**")
-                total_by_priority = (priority_values[priority_cols].sum())
-                if total_by_priority.sum() > 0:
-                    most_common_col = total_by_priority.idxmax()
-                    most_common_label = most_common_col.replace("_", " ")
-
-                    valid_months = priority_values[priority_values[priority_cols].sum(axis=1) > 0]
-                    if not valid_months.empty:
-                        priority3_peak_month = (valid_months.set_index("Month")["Priority_3"].idxmax())
-                        priority3_average = (valid_months["Priority_3"].mean())
-
-                        insight1, insight2, insight3 = st.columns(3)
-                        insight1.metric("Most common priority",most_common_label)
-                        insight2.metric("Average Priority 3 share",f"{priority3_average:.1f}%")
-                        insight3.metric("Peak Priority 3 month",priority3_peak_month)
-                     
-                    with st.expander("View monthly priority breakdown"):
-                        display_table = priority_values[["Month"] + priority_cols].copy()
-                        display_table = display_table.rename(columns={"Priority_0": "Priority 0 (%)",
-                                                                      "Priority_1": "Priority 1 (%)",
-                                                                      "Priority_2": "Priority 2 (%)",
-                                                                      "Priority_3": "Priority 3 (%)",})
-                        st.dataframe(display_table,use_container_width=True,hide_index=True)
-                else:
-                    st.info("There are no valid priority values ""for the selected filters.")
-        except Exception as exc:
-            st.info("Teacher priority analysis is unavailable "f"for the selected data: {exc}")
  #=================================================================================================================
 
     elif page == "Visits":
