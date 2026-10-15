@@ -484,6 +484,7 @@ def render_priority_chart(filtered_df,key_prefix="home"):
                       color="Priority",
                       markers=True,
                       title="Monthly Teacher Priority Trends",
+                      title_x=0.5,
                       template="plotly_white",
                       category_orders={"Month": MONTH_ORDER},
                       color_discrete_map=colors)
