@@ -848,7 +848,7 @@ def upload_page():
             except Exception as exc:
                 st.error("Unable to read the Excel file.")
                 st.exception(exc)
-            st.button(_logout_pim())
+        st.button(_logout_pim())
  
 def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
     """Interactive dashboard with stable chart dimensions and global filters."""
