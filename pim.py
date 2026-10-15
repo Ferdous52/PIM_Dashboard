@@ -347,7 +347,7 @@ def render_standards_chart(filtered_df,key_prefix="home",show_values=True):
                      y="Percentage",
                      color="Status",
                      barmode=("group" if chart_mode == "Grouped bars" else "stack"),
-                     title="Minimum Standards by Month",
+                     title="Standards Met by Month",
                      template="plotly_white",
                      color_discrete_map=colors)
 
