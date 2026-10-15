@@ -779,53 +779,17 @@ def apply_page_css():
  
  
 def login_page():
-    st.markdown("""/* Force input fields to stay readable in light and dark themes */
-    [data-testid="stForm"] input,
-    [data-testid="stForm"] textarea,
-    [data-testid="stForm"] [data-baseweb="input"] input,
-    [data-testid="stForm"] [data-baseweb="textarea"] textarea {
-        background: #FFFFFF !important;
-        background-color: #FFFFFF !important;
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-        caret-color: #000000 !important;
-        border: 1px solid #CBD5E1 !important;
-        border-radius: 8px !important;
-        opacity: 1 !important;
-        box-shadow: none !important;
-    }
-    
-    /* Keep text black when typing or focusing */
-    [data-testid="stForm"] input:focus,
-    [data-testid="stForm"] textarea:focus {
-        background-color: #FFFFFF !important;
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-        border: 1px solid #3B82F6 !important;
-        outline: none !important;
-    }
-    
-    /* Placeholder text */
-    [data-testid="stForm"] input::placeholder,
-    [data-testid="stForm"] textarea::placeholder {
-        color: #64748B !important;
-        -webkit-text-fill-color: #64748B !important;
-        opacity: 1 !important;
-    }
-    
-    /* Labels remain visible on the dark login card */
-    [data-testid="stForm"] label {
-        color: #E5E7EB !important;
-    }
-    
-    /* Prevent browser autofill from changing the colors */
-    [data-testid="stForm"] input:-webkit-autofill,
-    [data-testid="stForm"] input:-webkit-autofill:hover,
-    [data-testid="stForm"] input:-webkit-autofill:focus {
-        -webkit-text-fill-color: #000000 !important;
-        -webkit-box-shadow: 0 0 0 1000px #FFFFFF inset !important;
-        box-shadow: 0 0 0 1000px #FFFFFF inset !important;
-    }
+    st.markdown("""
+    <style>
+    .stApp {background:linear-gradient(135deg,#0F172A 0%,#172554 50%,#0F172A 100%) !important;}
+    .main .block-container {min-height:100vh;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;padding-top:30px!important;padding-bottom:30px!important;}
+    .pim-title {text-align:center;color:white;font-size:42px;font-weight:700;margin-bottom:5px;}
+    .pim-subtitle {text-align:center;color:#CBD5E1;font-size:17px;margin-bottom:30px;}
+    [data-testid="stForm"] {background:rgba(15,23,42,.95);padding:30px!important;border-radius:18px;border:1px solid rgba(255,255,255,.18);box-shadow:0 10px 40px rgba(0,0,0,.45);}
+    [data-testid="stForm"] label {color:#E5E7EB!important;font-weight:500;}
+    [data-testid="stForm"] input {background-color:rgba(255,255,255,.08)!important;color:white!important;border:1px solid rgba(255,255,255,.20)!important;border-radius:8px!important;}
+    [data-testid="stFormSubmitButton"] button {width:100%;background:#2563EB;color:white;border:0;border-radius:8px;padding:10px;font-size:16px;font-weight:600;}
+    </style>
     """, unsafe_allow_html=True)
     st.markdown('<div class="pim-title">📊 PIM Dashboard</div>', unsafe_allow_html=True)
     st.markdown('<div class="pim-subtitle">Monitor &nbsp;•&nbsp; Analyze &nbsp;•&nbsp; Improve</div>', unsafe_allow_html=True)
