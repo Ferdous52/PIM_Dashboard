@@ -1040,11 +1040,11 @@ def login_page():
     .pim-subtitle {text-align:center;color:#CBD5E1;font-size:17px;margin-bottom:30px;}
     [data-testid="stForm"] {background:rgba(15,23,42,.95);padding:30px!important;border-radius:18px;border:1px solid rgba(255,255,255,.18);box-shadow:0 10px 40px rgba(0,0,0,.45);}
     [data-testid="stForm"] label {color:#E5E7EB!important;font-weight:500;}
-    [data-testid="stForm"] input {background-color:rgba(255,255,255,.08)!important;color:white!important;border:1px solid rgba(255,255,255,.20)!important;border-radius:8px!important;}
+    [data-testid="stForm"] input {background-color:rgba(255,255,255,.08)!important;color:black!important;border:1px solid rgba(255,255,255,.20)!important;border-radius:8px!important;}
     [data-testid="stFormSubmitButton"] button {width:100%;background:#2563EB;color:white;border:0;border-radius:8px;padding:10px;font-size:16px;font-weight:600;}
     </style>
     """, unsafe_allow_html=True)
-    st.markdown('<div class="pim-title">📊 PIM Dashboard</div>', unsafe_allow_html=True)
+    st.markdown('<div class="pim-title">PIM Dashboard</div>', unsafe_allow_html=True)
     st.markdown('<div class="pim-subtitle">Monitor &nbsp;•&nbsp; Analyze &nbsp;•&nbsp; Improve</div>', unsafe_allow_html=True)
     _, center, _ = st.columns([1, 1.1, 1])
     with center:
