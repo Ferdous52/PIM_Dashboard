@@ -428,21 +428,18 @@ def render_priority_chart(filtered_df,key_prefix="home"):
             col = f"{PRIORITY_STUB}_{month}"
 
             if col in filtered_df.columns:
-                month_counts[month] = int(
-                    pd.to_numeric(filtered_df[col],
-                                  errors="coerce").isin([0, 1, 2, 3]).sum())
+                month_counts[month] = int(pd.to_numeric(filtered_df[col],errors="coerce").isin([0, 1, 2, 3]).sum())
             else:
                 month_counts[month] = 0
 
-        priority_long_df["Records"] = (priority_long_df.apply(
-                lambda row: (row["Percentage"]* month_counts.get(row["Month"], 0)/ 100),axis=1))
+        priority_long_df["Records"] = (priority_long_df.apply(lambda row: (row["Percentage"]* month_counts.get(row["Month"], 0)/ 100),axis=1))
 
         y_col = "Records"
-        y_title = "Estimated teacher records"
+        y_title = "Number of Teacher"
 
     else:
         y_col = "Percentage"
-        y_title = "Share of teachers (%)"
+        y_title = "Teachers (%)"
 
     if priority_focus != "All priorities":
         priority_long_df = priority_long_df[priority_long_df["Priority"] == priority_focus]
