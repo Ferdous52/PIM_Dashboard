@@ -167,9 +167,9 @@ def calculate_dashboard_metrics(df: pd.DataFrame) -> dict:
     total_staff = df["RtR Staff Name"].nunique()
     total_school = df["Project ID"].nunique()
     total_teachers = df["Teacher Name"].nunique()
-    total_visits = int(df[visit_cols].sum())
-    standard_rate = f"{round((df[standard_cols].value_counts().loc[1]/df1[standard_cols].value_counts().sum())*100,1)}%"
-    avg_priority = float((round(df1[priority_cols].mean(),1)))
+    total_visits = float(df[visit_cols].sum().sum())
+    standard_rate = f"{round(df[standard_cols].stack().value_counts().loc[1]/(df[standard_cols].stack().value_counts().loc[0]+df[standard_cols].stack().value_counts().loc[1])*100,1)}%"
+    avg_priority = float((round(df[priority_cols].stack().mean(),1)))
     metrics = {"total_staff" : total_staff,
                "total_schools": total_school,
                "total_teachers": total_teachers,
