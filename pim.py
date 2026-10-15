@@ -1417,7 +1417,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
         for col, (label, value) in zip(metric_cols, metric_values):
             with col:
                 st.metric(label, value)
-    
+        st.divider()
         # Shared chart value control
         show_monthly_values = st.checkbox("Show values on charts",value=True,key="home_show_chart_values")
     
@@ -1433,9 +1433,9 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
             render_standards_chart(filtered_df,
                                    key_prefix="home",
                                    show_values=show_monthly_values)
-    
+        
         # Graph 3
-        st.markdown('<div class="pim-section">Teacher Priority Insights</div>',unsafe_allow_html=True)
+        st.divider()
         render_priority_chart(filtered_df,key_prefix="home")
 
  #=================================================================================================================
