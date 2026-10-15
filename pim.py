@@ -810,7 +810,15 @@ def login_page():
             else:
                 st.error("Incorrect username or password.")
  
- 
+def _logout_pim():
+   st.session_state.logged_in = False
+   st.session_state.page = "login"
+   st.session_state.df = None
+   st.session_state.selected_sheet = None
+   for key in ["pim_navigation", "pim_district", "pim_staff_filter", "pim_year"]:
+            st.session_state.pop(key, None) 
+
+
 def upload_page():
     st.markdown("""
     <style>
@@ -848,7 +856,7 @@ def upload_page():
             except Exception as exc:
                 st.error("Unable to read the Excel file.")
                 st.exception(exc)
-        st.button("Logout")
+        st.button("Logout" ,on_click=_logout_pim)
  
 def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
     """Interactive dashboard with stable chart dimensions and global filters."""
@@ -908,13 +916,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
         st.session_state["pim_staff_filter"] = "All staff"
         st.session_state["pim_year"] = "All years"
  
-    def _logout_pim():
-        st.session_state.logged_in = False
-        st.session_state.page = "login"
-        st.session_state.df = None
-        st.session_state.selected_sheet = None
-        for key in ["pim_navigation", "pim_district", "pim_staff_filter", "pim_year"]:
-            st.session_state.pop(key, None)
+
  
     # Navigation and filters live in the sidebar. Widget keys preserve selection
     # across Streamlit reruns and avoid accidentally resetting the page.
@@ -987,18 +989,13 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
         # Chart controls make the overview useful for quick comparisons.
         control1, control2, control3 = st.columns([1, 1, 2], gap="medium")
         with control1:
-            visit_chart_type = st.selectbox(
-                "Visits chart", ["Line", "Bar"], key="home_visit_chart_type"
-            )
+            visit_chart_type = st.selectbox("Visits chart", ["Line", "Bar"], key="home_visit_chart_type")
+         
         with control2:
-            standards_chart_mode = st.selectbox(
-                "Standards chart", ["Grouped bars", "Stacked bars", "Line"],
-                key="home_standards_chart_mode"
-            )
+            standards_chart_mode = st.selectbox("Standards chart", ["Grouped bars", "Stacked bars", "Line"],key="home_standards_chart_mode")
+         
         with control3:
-            show_monthly_values = st.checkbox(
-                "Show values on charts", value=True, key="home_show_chart_values"
-            )
+            show_monthly_values = st.checkbox("Show values on charts", value=True, key="home_show_chart_values")
 
         monthly = monthly_visit_summary(filtered_df).dropna(subset=["Month"]).copy()
         monthly["Month"] = monthly["Month"].astype(str)
@@ -1559,12 +1556,11 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                 standard_grade_lf(filtered_df).to_excel(writer, sheet_name="Standards Summary")
             except Exception:
                 pass
-        st.download_button(
-            label="📥 Download Excel Report", data=output.getvalue(),
-            file_name="PIM_Report.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True,
-        )
+        st.download_button(label="📥 Download Excel Report", data=output.getvalue(),
+                           file_name="PIM_Report.xlsx",
+                           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                           use_container_width=True,)
+     
         st.markdown("**Preview of included records**")
         st.dataframe(filtered_df.head(100), use_container_width=True, hide_index=True)
  
