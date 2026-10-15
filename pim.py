@@ -159,7 +159,7 @@ def df_long(df: pd.DataFrame) -> pd.DataFrame:
 #========================================================================================================================================================
  
  
-def calculate_dashboard_metrics():
+def calculate_dashboard_metrics(df: pd.DataFrame) -> dict:
     total_staff = df["RtR Staff Name"].nunique()
     total_school = df["Project ID"].nunique()
     total_teachers = df["Teacher Name"].nunique()
