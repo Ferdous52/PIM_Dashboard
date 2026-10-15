@@ -1176,7 +1176,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
     # Navigation and filters live in the sidebar. Widget keys preserve selection
     # across Streamlit reruns and avoid accidentally resetting the page.
     with st.sidebar:
-        st.markdown("<div style='font-size:25px;font-weight:800; padding:4px 0 12px'>📊 PIM Dashboard</div>", unsafe_allow_html=True)
+        st.markdown("<div style='font-size:25px;font-weight:800; padding:4px 0 12px'>PIM Dashboard</div>", unsafe_allow_html=True)
         st.caption(f"Workbook: {st.session_state.get('selected_sheet') or 'Uploaded data'}")
         page = st.radio(
             "Navigation", ["Home", "Visits", "Standards", "Priority", "Reports"],
