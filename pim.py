@@ -848,7 +848,7 @@ def upload_page():
             except Exception as exc:
                 st.error("Unable to read the Excel file.")
                 st.exception(exc)
-        st.button("🚪 Logout", use_container_width=True, key="pim_logout", on_click=_logout_pim)
+        st.button("🚪 Logout", use_container_width=True, key="pim_logout", on_click=logout_pim())
  
 def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
     """Interactive dashboard with stable chart dimensions and global filters."""
@@ -1582,7 +1582,7 @@ def main():
                        layout="wide",
                        initial_sidebar_state="expanded",
                        menu_items={
-                           "About": "PIM Dashboard — Project Implementation Monitoring"})
+                           "About": "PIM Dashboard"})
     initialize_session_state()
  
     if not st.session_state.logged_in or st.session_state.page == "login":
