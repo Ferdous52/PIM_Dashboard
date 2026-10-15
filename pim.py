@@ -248,14 +248,9 @@ def create_monthly_visit_chart(df: pd.DataFrame):
 
 #### Home Page 3 graph
 
-def render_monthly_visits_chart(
-    filtered_df,
-    key_prefix="home",
-    show_values=True
-):
-    monthly = monthly_visit_summary(filtered_df).dropna(
-        subset=["Month"]
-    ).copy()
+def render_monthly_visits_chart(filtered_df,key_prefix="home",show_values=True):
+ 
+    monthly = monthly_visit_summary(filtered_df).dropna(subset=["Month"]).copy()
 
     if monthly.empty:
         st.info("No monthly school visit data is available.")
@@ -263,91 +258,52 @@ def render_monthly_visits_chart(
 
     monthly["Month"] = monthly["Month"].astype(str)
 
-    chart_type = st.selectbox(
-        "Visits chart",
-        ["Line", "Bar"],
-        key=f"{key_prefix}_visit_chart_type"
-    )
+    chart_type = st.selectbox("Visits chart",["Line", "Bar"],key=f"{key_prefix}_visit_chart_type")
 
     if chart_type == "Line":
         fig = px.line(
-            monthly,
-            x="Month",
-            y="Total_Visit",
-            markers=True,
-            title="Monthly School Visits",
-            template="plotly_white"
-        )
+                      monthly,
+                      x="Month",
+                      y="Total_Visit",
+                      markers=True,
+                      title="Monthly School Visits",
+                      template="plotly_white")
 
-        fig.update_traces(
-            line=dict(color="#0284C7", width=3),
-            marker=dict(size=8),
-            text=monthly["Total_Visit"] if show_values else None,
-            texttemplate="%{text:,.0f}" if show_values else None,
-            textposition="top center",
-            hovertemplate=(
-                "Month: %{x}<br>"
-                "Visits: %{y:,.0f}<extra></extra>"
-            )
-        )
+        fig.update_traces(line=dict(color="#0284C7", width=3),
+                          marker=dict(size=8),
+                          text=monthly["Total_Visit"] if show_values else None,
+                          texttemplate="%{text:,.0f}" if show_values else None,
+                          textposition="top center",
+                          hovertemplate=("Month: %{x}<br>""Visits: %{y:,.0f}<extra></extra>"))
 
     else:
-        fig = px.bar(
-            monthly,
-            x="Month",
-            y="Total_Visit",
-            title="Monthly School Visits",
-            template="plotly_white",
-            text="Total_Visit" if show_values else None,
-            color_discrete_sequence=["#0284C7"]
-        )
+        fig = px.bar(monthly,
+                     x="Month",
+                     y="Total_Visit",
+                     title="Monthly School Visits",
+                     template="plotly_white",
+                     text="Total_Visit" if show_values else None,
+                     color_discrete_sequence=["#0284C7"])
 
-        fig.update_traces(
-            texttemplate="%{text:,.0f}" if show_values else None,
-            hovertemplate=(
-                "Month: %{x}<br>"
-                "Visits: %{y:,.0f}<extra></extra>"
-            )
-        )
+        fig.update_traces(texttemplate="%{text:,.0f}" if show_values else None,
+            hovertemplate=("Month: %{x}<br>""Visits: %{y:,.0f}<extra></extra>"))
 
-    fig.update_layout(
-        height=390,
-        autosize=True,
-        margin=dict(l=20, r=20, t=65, b=35),
-        title=dict(x=0.03),
-        showlegend=False,
-        xaxis=dict(
-            categoryorder="array",
-            categoryarray=MONTH_ORDER
-        ),
-        yaxis=dict(
-            title="Visits",
-            rangemode="tozero",
-            gridcolor="#E2E8F0"
-        ),
-        font=dict(family="Arial", color="#0F172A"),
-        hovermode="x unified"
-    )
+    fig.update_layout(height=390,
+                      autosize=True,
+                      margin=dict(l=20, r=20, t=65, b=35),
+                      title=dict(x=0.03),
+                      showlegend=False,
+                      xaxis=dict(categoryorder="array",categoryarray=MONTH_ORDER),
+                      yaxis=dict(title="Visits",rangemode="tozero",gridcolor="#E2E8F0"),
+                      font=dict(family="Arial", color="#0F172A"),
+                      hovermode="x unified")
 
-    st.plotly_chart(
-        fig,
-        use_container_width=True,
-        config={
-            "responsive": True,
-            "displaylogo": False,
-            "scrollZoom": True
-        },
-        key=f"{key_prefix}_monthly_visits_chart"
-    )
+    st.plotly_chart(fig,use_container_width=True,config={"responsive": True,"displaylogo": False,"scrollZoom": True},key=f"{key_prefix}_monthly_visits_chart")
 
 
-def render_standards_chart(
-    filtered_df,
-    key_prefix="home",
-    show_values=True
-):
+def render_standards_chart(filtered_df,key_prefix="home",show_values=True):
+ 
     standards = standard_month(filtered_df).reset_index()
-
     if standards.empty:
         st.info("No monthly standards data is available.")
         return
@@ -355,200 +311,115 @@ def render_standards_chart(
     standards["Month"] = standards["Month"].astype(str)
 
     required_columns = ["Meets Standard", "Does Not Meet"]
-    missing = [
-        col for col in required_columns
-        if col not in standards.columns
-    ]
+    missing = [col for col in required_columns if col not in standards.columns]
 
     if missing:
         st.warning(f"Missing standards columns: {missing}")
         return
 
-    standards_long = standards.melt(
-        id_vars="Month",
-        value_vars=required_columns,
-        var_name="Status",
-        value_name="Percentage"
-    )
+    standards_long = standards.melt(id_vars="Month",
+                                    value_vars=required_columns,
+                                    var_name="Status",
+                                    value_name="Percentage")
 
-    chart_mode = st.selectbox(
-        "Standards chart",
-        ["Grouped bars", "Stacked bars", "Line"],
-        key=f"{key_prefix}_standards_chart_mode"
-    )
-
-    colors = {
-        "Meets Standard": "#059669",
-        "Does Not Meet": "#F97316"
-    }
+    chart_mode = st.selectbox("Standards chart",["Grouped bars", "Stacked bars", "Line"],key=f"{key_prefix}_standards_chart_mode")
+    colors = {"Meets Standard": "#059669","Does Not Meet": "#F97316"}
 
     if chart_mode == "Line":
-        fig = px.line(
-            standards_long,
-            x="Month",
-            y="Percentage",
-            color="Status",
-            markers=True,
-            title="Minimum Standards by Month",
-            template="plotly_white",
-            color_discrete_map=colors
-        )
+        fig = px.line(standards_long,
+                      x="Month",
+                      y="Percentage",
+                      color="Status",
+                      markers=True,
+                      title="Minimum Standards by Month",
+                      template="plotly_white",
+                      color_discrete_map=colors)
 
     else:
-        fig = px.bar(
-            standards_long,
-            x="Month",
-            y="Percentage",
-            color="Status",
-            barmode=(
-                "group" if chart_mode == "Grouped bars"
-                else "stack"
-            ),
-            title="Minimum Standards by Month",
-            template="plotly_white",
-            color_discrete_map=colors
-        )
+        fig = px.bar(standards_long,
+                     x="Month",
+                     y="Percentage",
+                     color="Status",
+                     barmode=("group" if chart_mode == "Grouped bars" else "stack"),
+                     title="Minimum Standards by Month",
+                     template="plotly_white",
+                     color_discrete_map=colors)
 
     if show_values:
-        fig.update_traces(
-            texttemplate="%{y:.0f}%",
-            textposition=(
-                "outside" if chart_mode != "Line" else "top center"
-            )
-        )
+        fig.update_traces(texttemplate="%{y:.0f}%",
+            textposition=("outside" if chart_mode != "Line" else "top center"))
 
     fig.update_traces(
-        hovertemplate=(
-            "Month: %{x}<br>"
-            "%{fullData.name}: %{y:.1f}%<extra></extra>"
-        )
-    )
+        hovertemplate=("Month: %{x}<br>""%{fullData.name}: %{y:.1f}%<extra></extra>"))
 
-    fig.update_layout(
-        height=390,
-        autosize=True,
-        margin=dict(l=20, r=20, t=65, b=35),
-        title=dict(x=0.03),
-        yaxis=dict(
-            title="Percentage (%)",
-            range=[0, 105 if show_values else 100],
-            gridcolor="#E2E8F0"
-        ),
-        xaxis=dict(
-            categoryorder="array",
-            categoryarray=MONTH_ORDER
-        ),
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1
-        ),
-        font=dict(family="Arial", color="#0F172A"),
-        hovermode="x unified"
-    )
+    fig.update_layout(height=390,
+                      autosize=True,
+                      margin=dict(l=20, r=20, t=65, b=35),
+                      title=dict(x=0.03),
+                      yaxis=dict(title="Percentage (%)",range=[0, 105 if show_values else 100],gridcolor="#E2E8F0"),
+                      xaxis=dict(categoryorder="array",categoryarray=MONTH_ORDER),
+                      legend=dict(orientation="h",yanchor="bottom",y=1.02,xanchor="right",x=1),
+                      font=dict(family="Arial", color="#0F172A"),
+                      hovermode="x unified")
 
-    st.plotly_chart(
-        fig,
-        use_container_width=True,
-        config={
-            "responsive": True,
-            "displaylogo": False,
-            "scrollZoom": True
-        },
-        key=f"{key_prefix}_standards_chart"
-    )
+    st.plotly_chart(fig,
+                    use_container_width=True,
+                    config={"responsive": True,"displaylogo": False,"scrollZoom": True},key=f"{key_prefix}_standards_chart")
 
 
-
-def render_priority_chart(
-    filtered_df,
-    key_prefix="home"
-):
+def render_priority_chart(filtered_df,key_prefix="home"):
+ 
     priority_table = priority_teacher_table(filtered_df)
-
     if priority_table.empty:
         st.info("No teacher priority data is available.")
         return
 
     priority_values = priority_table.copy()
-
     priority_cols = [f"Priority_{i}" for i in range(4)]
 
     for col in priority_cols:
         if col not in priority_values.columns:
             priority_values[col] = 0
 
-        priority_values[col] = pd.to_numeric(
-            priority_values[col]
-            .astype(str)
-            .str.replace("%", "", regex=False),
-            errors="coerce"
-        ).fillna(0)
+        priority_values[col] = pd.to_numeric(priority_values[col].astype(str).str.replace("%", "", regex=False),errors="coerce").fillna(0)
 
     priority_values.index.name = "Month"
     priority_values = priority_values.reset_index()
     priority_values["Month"] = priority_values["Month"].astype(str)
 
-    priority_values["_month_order"] = (
-        priority_values["Month"].map(
-            {month: i for i, month in enumerate(MONTH_ORDER)}
-        )
-    )
-
-    priority_values = (
-        priority_values
-        .sort_values("_month_order")
-        .drop(columns="_month_order")
-    )
-
+    priority_values["_month_order"] = (priority_values["Month"].map({month: i for i, month in enumerate(MONTH_ORDER)}))
+    priority_values = (priority_values.sort_values("_month_order").drop(columns="_month_order"))
+ 
     control1, control2, control3 = st.columns(3)
 
     with control1:
-        priority_view = st.selectbox(
-            "Chart style",
-            ["Trend lines", "Stacked area", "Stacked bars"],
-            key=f"{key_prefix}_priority_view"
-        )
+        priority_view = st.selectbox("Chart style",
+                                     ["Trend lines", "Stacked area", "Stacked bars"],
+                                     key=f"{key_prefix}_priority_view")
 
     with control2:
-        priority_focus = st.selectbox(
-            "Priority area",
-            [
-                "All priorities",
-                "Priority 0",
-                "Priority 1",
-                "Priority 2",
-                "Priority 3"
-            ],
-            key=f"{key_prefix}_priority_focus"
-        )
+        priority_focus = st.selectbox("Priority area",
+                                      ["All priorities",
+                                       "Priority 0",
+                                       "Priority 1",
+                                       "Priority 2",
+                                       "Priority 3"],
+                                      key=f"{key_prefix}_priority_focus")
 
     with control3:
-        priority_metric = st.selectbox(
-            "Display metric",
-            ["Percentage (%)", "Teacher records"],
-            key=f"{key_prefix}_priority_metric"
-        )
+        priority_metric = st.selectbox("Display metric",["Percentage (%)", "Teacher records"],key=f"{key_prefix}_priority_metric")
 
-    priority_labels = {
-        "Priority_0": "Priority 0",
-        "Priority_1": "Priority 1",
-        "Priority_2": "Priority 2",
-        "Priority_3": "Priority 3"
-    }
+    priority_labels = {"Priority_0": "Priority 0",
+                       "Priority_1": "Priority 1",
+                       "Priority_2": "Priority 2",
+                       "Priority_3": "Priority 3"}
 
-    priority_long_df = priority_values.melt(
-        id_vars="Month",
-        value_vars=priority_cols,
-        var_name="Priority",
-        value_name="Percentage"
-    )
+    priority_long_df = priority_values.melt(id_vars="Month",
+                                            value_vars=priority_cols,
+                                            var_name="Priority",
+                                            value_name="Percentage")
 
-    priority_long_df["Priority"] = (
-        priority_long_df["Priority"].map(priority_labels)
-    )
+    priority_long_df["Priority"] = (priority_long_df["Priority"].map(priority_labels))
 
     if priority_metric == "Teacher records":
         month_counts = {}
@@ -558,24 +429,13 @@ def render_priority_chart(
 
             if col in filtered_df.columns:
                 month_counts[month] = int(
-                    pd.to_numeric(
-                        filtered_df[col],
-                        errors="coerce"
-                    ).isin([0, 1, 2, 3]).sum()
-                )
+                    pd.to_numeric(filtered_df[col],
+                                  errors="coerce").isin([0, 1, 2, 3]).sum())
             else:
                 month_counts[month] = 0
 
-        priority_long_df["Records"] = (
-            priority_long_df.apply(
-                lambda row: (
-                    row["Percentage"]
-                    * month_counts.get(row["Month"], 0)
-                    / 100
-                ),
-                axis=1
-            )
-        )
+        priority_long_df["Records"] = (priority_long_df.apply(
+                lambda row: (row["Percentage"]* month_counts.get(row["Month"], 0)/ 100),axis=1))
 
         y_col = "Records"
         y_title = "Estimated teacher records"
@@ -585,96 +445,61 @@ def render_priority_chart(
         y_title = "Share of teachers (%)"
 
     if priority_focus != "All priorities":
-        priority_long_df = priority_long_df[
-            priority_long_df["Priority"] == priority_focus
-        ]
+        priority_long_df = priority_long_df[priority_long_df["Priority"] == priority_focus]
 
     if priority_long_df.empty:
         st.info("No priority values are available for this selection.")
         return
 
-    colors = {
-        "Priority 0": "#64748B",
-        "Priority 1": "#0EA5E9",
-        "Priority 2": "#8B5CF6",
-        "Priority 3": "#F59E0B"
-    }
+    colors = {"Priority 0": "#64748B",
+              "Priority 1": "#0EA5E9",
+              "Priority 2": "#8B5CF6",
+              "Priority 3": "#F59E0B"}
 
     if priority_view == "Stacked area" and priority_focus == "All priorities":
-        fig = px.area(
-            priority_long_df,
-            x="Month",
-            y=y_col,
-            color="Priority",
-            title="Monthly Distribution of Teacher Priority Areas",
-            template="plotly_white",
-            category_orders={"Month": MONTH_ORDER},
-            color_discrete_map=colors
-        )
+        fig = px.area(priority_long_df,
+                      x="Month",
+                      y=y_col,
+                      color="Priority",
+                      title="Monthly Distribution of Teacher Priority Areas",
+                      template="plotly_white",
+                      category_orders={"Month": MONTH_ORDER},
+                      color_discrete_map=colors)
 
     elif priority_view == "Stacked bars" and priority_focus == "All priorities":
-        fig = px.bar(
-            priority_long_df,
-            x="Month",
-            y=y_col,
-            color="Priority",
-            barmode="stack",
-            title="Monthly Distribution of Teacher Priority Areas",
-            template="plotly_white",
-            category_orders={"Month": MONTH_ORDER},
-            color_discrete_map=colors
-        )
+        fig = px.bar(priority_long_df,
+                     x="Month",
+                     y=y_col,
+                     color="Priority",
+                     barmode="stack",
+                     title="Monthly Distribution of Teacher Priority Areas",
+                     template="plotly_white",
+                     category_orders={"Month": MONTH_ORDER},
+                     color_discrete_map=colors)
 
     else:
-        fig = px.line(
-            priority_long_df,
-            x="Month",
-            y=y_col,
-            color="Priority",
-            markers=True,
-            title="Monthly Teacher Priority Trends",
-            template="plotly_white",
-            category_orders={"Month": MONTH_ORDER},
-            color_discrete_map=colors
-        )
+        fig = px.line(priority_long_df,
+                      x="Month",
+                      y=y_col,
+                      color="Priority",
+                      markers=True,
+                      title="Monthly Teacher Priority Trends",
+                      template="plotly_white",
+                      category_orders={"Month": MONTH_ORDER},
+                      color_discrete_map=colors)
 
-    fig.update_layout(
-        height=440,
-        autosize=True,
-        margin=dict(l=20, r=20, t=70, b=35),
-        title=dict(x=0.03),
-        xaxis=dict(
-            title="Month",
-            categoryorder="array",
-            categoryarray=MONTH_ORDER
-        ),
-        yaxis=dict(
-            title=y_title,
-            gridcolor="#E2E8F0",
-            rangemode="tozero"
-        ),
-        legend=dict(
-            title="Priority area",
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="left",
-            x=0
-        ),
-        font=dict(family="Arial", color="#0F172A"),
-        hovermode="x unified"
-    )
+    fig.update_layout(height=440,
+                      autosize=True,
+                      margin=dict(l=20, r=20, t=70, b=35),
+                      title=dict(x=0.03),
+                      xaxis=dict(title="Month",categoryorder="array",categoryarray=MONTH_ORDER),
+                      yaxis=dict(title=y_title,gridcolor="#E2E8F0",rangemode="tozero"),
+                      legend=dict(title="Priority area",orientation="h",yanchor="bottom",y=1.02,xanchor="left",x=0),
+                      font=dict(family="Arial", color="#0F172A"),
+                      hovermode="x unified")
 
-    st.plotly_chart(
-        fig,
-        use_container_width=True,
-        config={
-            "responsive": True,
-            "displaylogo": False,
-            "scrollZoom": True
-        },
-        key=f"{key_prefix}_priority_chart"
-    )
+    st.plotly_chart(fig,use_container_width=True,
+        config={"responsive": True,"displaylogo": False,"scrollZoom": True},key=f"{key_prefix}_priority_chart")
 
 
 # ============================================================
