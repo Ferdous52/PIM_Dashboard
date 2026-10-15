@@ -1237,7 +1237,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                          ("Total Schools", f"{metrics['total_schools']:,}"),
                          ("Total Teachers", f"{metrics['total_teachers']:,}"),
                          ("Total School Visits", f"{metrics['total_visits']:,.0f}"),
-                         ("Standards Met", f"{metrics['standard_rate']:.1f}%"),
+                         ("standard_rate", f"{metrics['standard_rate']:.1f}%"),
                          ("Average Priority", f"{metrics['avg_priority']:.2f}"),]
     
         metric_cols = st.columns(6, gap="small")
