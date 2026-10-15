@@ -1312,24 +1312,14 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                        </style>""", unsafe_allow_html=True)
 
         st.title("Minimum Standards")
-        tab1, tab2 = st.tabs(["Monthly standards", "Standards by staff"])
-        with tab1:
-            left, right = st.columns([1, 1])
-            with left:
-                st.dataframe(standard_month(filtered_df), use_container_width=True)
-            with right:
-                fig = standard_month_gph(filtered_df)
-                st.pyplot(fig, use_container_width=True)
-                plt.close(fig)
-        with tab2:
-            standards_by_staff = standard_grade_lf(filtered_df)
-            left, right = st.columns(2)
-            with left:
-                st.dataframe(standards_by_staff, use_container_width=True)
-            with right:
-                fig = stnadard_LF_graph(filtered_df)
-                st.pyplot(fig, use_container_width=True)
-                plt.close(fig)
+
+        left, right = st.columns(2)
+        with left:
+            st.dataframe(standards_by_staff, use_container_width=True)
+        with right:
+            fig = stnadard_LF_graph(filtered_df)
+            st.pyplot(fig, use_container_width=True)
+            plt.close(fig)
  #=================================================================================================================
 
  
