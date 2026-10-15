@@ -1315,7 +1315,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
 
         left, right = st.columns(2)
         with left:
-            st.dataframe(standards_by_staff, use_container_width=True)
+            st.dataframe(standard_month(filtered_df), height = "content" , width = "content")
         with right:
             fig = stnadard_LF_graph(filtered_df)
             st.pyplot(fig, use_container_width=True)
