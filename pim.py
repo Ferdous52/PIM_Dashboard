@@ -1204,14 +1204,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                 # mode, estimate counts from available monthly records.
                 if priority_metric == "Teacher records":
                     monthly_totals = (
-                        filtered_df[
-                            [
-                                col for col in filtered_df.columns
-                                if col.startswith(PRIORITY_STUB + "_")
-                            ]
-                        ]
-                        .apply(pd.to_numeric, errors="coerce")
-                    )
+                        filtered_df[[col for col in filtered_df.columns if col.startswith(PRIORITY_STUB + "_")]].apply(pd.to_numeric, errors="coerce"))
 
                     month_counts = {}
 
@@ -1219,26 +1212,11 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                         col = f"{PRIORITY_STUB}_{month}"
 
                         if col in filtered_df.columns:
-                            month_counts[month] = int(
-                                pd.to_numeric(
-                                    filtered_df[col],
-                                    errors="coerce"
-                                ).isin([0, 1, 2, 3]).sum()
-                            )
+                            month_counts[month] = int(pd.to_numeric(filtered_df[col],errors="coerce").isin([0, 1, 2, 3]).sum())
                         else:
                             month_counts[month] = 0
 
-                    priority_long_df["Records"] = (
-                        priority_long_df.apply(
-                            lambda row: (
-                                row["Percentage"]
-                                * month_counts.get(row["Month"], 0)
-                                / 100
-                            ),
-                            axis=1
-                        )
-                    )
-
+                    priority_long_df["Records"] = (priority_long_df.apply(lambda row: (row["Percentage"]* month_counts.get(row["Month"], 0)/ 100),axis=1))
                     y_col = "Records"
                     y_title = "Estimated teacher records"
                 else:
@@ -1303,118 +1281,43 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
                         }
                     )
 
-                priority_fig.update_layout(
-                    height=440,
-                    autosize=True,
-                    margin=dict(l=20, r=20, t=70, b=35),
-                    title=dict(x=0.03),
-                    xaxis=dict(
-                        title="Month",
-                        categoryorder="array",
-                        categoryarray=MONTH_ORDER
-                    ),
-                    yaxis=dict(
-                        title=y_title,
-                        gridcolor="#E2E8F0",
-                        rangemode="tozero"
-                    ),
-                    legend=dict(
-                        title="Priority area",
-                        orientation="h",
-                        yanchor="bottom",
-                        y=1.02,
-                        xanchor="left",
-                        x=0
-                    ),
+                priority_fig.update_layout(height=440,autosize=True,margin=dict(l=20, r=20, t=70, b=35),title=dict(x=0.03),xaxis=dict(title="Month",categoryorder="array",categoryarray=MONTH_ORDER),
+                    yaxis=dict(title=y_title,gridcolor="#E2E8F0",rangemode="tozero"),
+                    legend=dict(title="Priority area",orientation="h",yanchor="bottom",y=1.02,xanchor="left",x=0),
                     font=dict(family="Arial", color="#0F172A"),
                     hovermode="x unified"
                 )
 
-                st.plotly_chart(
-                    priority_fig,
-                    use_container_width=True,
-                    config={
-                        "responsive": True,
-                        "displaylogo": False,
-                        "scrollZoom": True
-                    },
-                    key="home_interactive_priority_chart"
-                )
+                st.plotly_chart(priority_fig,use_container_width=True,config={"responsive": True,"displaylogo": False,"scrollZoom": True},key="home_interactive_priority_chart")
 
                 # Priority insights
                 st.markdown("**Priority insights**")
-
-                total_by_priority = (
-                    priority_values[priority_cols].sum()
-                )
-
+                total_by_priority = (priority_values[priority_cols].sum())
                 if total_by_priority.sum() > 0:
                     most_common_col = total_by_priority.idxmax()
-                    most_common_label = most_common_col.replace(
-                        "_", " "
-                    )
+                    most_common_label = most_common_col.replace("_", " ")
 
-                    valid_months = priority_values[
-                        priority_values[priority_cols].sum(axis=1) > 0
-                    ]
-
+                    valid_months = priority_values[priority_values[priority_cols].sum(axis=1) > 0]
                     if not valid_months.empty:
-                        priority3_peak_month = (
-                            valid_months.set_index("Month")["Priority_3"]
-                            .idxmax()
-                        )
-
-                        priority3_average = (
-                            valid_months["Priority_3"].mean()
-                        )
+                        priority3_peak_month = (valid_months.set_index("Month")["Priority_3"].idxmax())
+                        priority3_average = (valid_months["Priority_3"].mean())
 
                         insight1, insight2, insight3 = st.columns(3)
-
-                        insight1.metric(
-                            "Most common priority",
-                            most_common_label
-                        )
-
-                        insight2.metric(
-                            "Average Priority 3 share",
-                            f"{priority3_average:.1f}%"
-                        )
-
-                        insight3.metric(
-                            "Peak Priority 3 month",
-                            priority3_peak_month
-                        )
-
+                        insight1.metric("Most common priority",most_common_label)
+                        insight2.metric("Average Priority 3 share",f"{priority3_average:.1f}%")
+                        insight3.metric("Peak Priority 3 month",priority3_peak_month)
+                     
                     with st.expander("View monthly priority breakdown"):
-                        display_table = priority_values[
-                            ["Month"] + priority_cols
-                        ].copy()
-
-                        display_table = display_table.rename(
-                            columns={
-                                "Priority_0": "Priority 0 (%)",
-                                "Priority_1": "Priority 1 (%)",
-                                "Priority_2": "Priority 2 (%)",
-                                "Priority_3": "Priority 3 (%)",
-                            }
-                        )
-
-                        st.dataframe(
-                            display_table,
-                            use_container_width=True,
-                            hide_index=True
-                        )
+                        display_table = priority_values[["Month"] + priority_cols].copy()
+                        display_table = display_table.rename(columns={"Priority_0": "Priority 0 (%)",
+                                                                      "Priority_1": "Priority 1 (%)",
+                                                                      "Priority_2": "Priority 2 (%)",
+                                                                      "Priority_3": "Priority 3 (%)",})
+                        st.dataframe(display_table,use_container_width=True,hide_index=True)
                 else:
-                    st.info(
-                        "There are no valid priority values "
-                        "for the selected filters."
-                    )
-
+                    st.info("There are no valid priority values ""for the selected filters.")
         except Exception as exc:
-            st.info(
-                "Teacher priority analysis is unavailable "
-                f"for the selected data: {exc}"
-            )
+            st.info("Teacher priority analysis is unavailable "f"for the selected data: {exc}")
  #=================================================================================================================
 
     elif page == "Visits":
