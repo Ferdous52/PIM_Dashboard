@@ -492,7 +492,7 @@ def render_priority_chart(filtered_df,key_prefix="home"):
     fig.update_layout(height=440,
                       autosize=True,
                       margin=dict(l=20, r=20, t=70, b=35),
-                      title=dict(x=0.03),
+                      title=dict(x=0.5),
                       xaxis=dict(title="Month",categoryorder="array",categoryarray=MONTH_ORDER),
                       yaxis=dict(title=y_title,gridcolor="#E2E8F0",rangemode="tozero"),
                       legend=dict(title="Priority area",orientation="h",yanchor="bottom",y=1.02,xanchor="left",x=0),
