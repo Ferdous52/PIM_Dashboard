@@ -160,6 +160,10 @@ def df_long(df: pd.DataFrame) -> pd.DataFrame:
  
  
 def calculate_dashboard_metrics(df: pd.DataFrame) -> dict:
+    visit_cols = [c for c in df.columns if c.startswith(VISIT_PREFIX)]
+    standard_cols = [c for c in df.columns if c.startswith(STANDARD_PREFIX)]
+    priority_cols = [c for c in df.columns if c.startswith(PRIORITY_PREFIX)]
+
     total_staff = df["RtR Staff Name"].nunique()
     total_school = df["Project ID"].nunique()
     total_teachers = df["Teacher Name"].nunique()
