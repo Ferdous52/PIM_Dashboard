@@ -973,7 +973,6 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
     if page == "Home":
         st.markdown("""<style>.block-container {padding-top: 1em;}</style>""", unsafe_allow_html=True)
 
-        # Six KPI cards in one row on wide screens.
         metric_values = [
             ("Total Staff", f"{metrics['total_staff']:,}"),
             ("Total Schools", f"{metrics['total_schools']:,}"),
@@ -989,7 +988,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
 
         st.markdown('<div class="pim-section">Monthly performance</div>',unsafe_allow_html=True)
         # Chart controls make the overview useful for quick comparisons.
-        control1, control2, control3 = st.columns([1, 1, 2], gap="medium")
+        control1, control2, control3 = st.columns([1, 1, 2], gap="large")
         with control1:
             visit_chart_type = st.selectbox("Visits chart", ["Line", "Bar"], key="home_visit_chart_type")
          
