@@ -1027,12 +1027,15 @@ def apply_page_css():
     st.markdown("""
     <style>
     [data-testid="stSidebar"] {background-color: #0F172A;}
-    [data-testid="stSidebar"] * {color: white !important;}
+    [data-testid="stSidebar"] * {color: white;}
     [data-testid="stSidebar"] label {color: white !important;}
-    [data-testid="stSidebar"] button, .stButton > button, .stDownloadButton > button {border-radius: 8px; font-weight: 600;}
-    [data-testid="stDataFrame"] {border-radius: 10px;}
-    .stAlert {border-radius: 10px;}
-    .main .block-container {max-width: none; padding: 2rem;}
+    [data-testid="stSidebar"] [data-testid="stSelectbox"]
+    [data-baseweb="select"] * {color: #111827 !important;}
+    [data-testid="stSidebar"] [data-testid="stSelectbox"]
+    [data-baseweb="select"] > div {background-color: #FFFFFF !important;}
+    [data-baseweb="popover"] [role="option"] {color: #111827 !important;background-color: #FFFFFF !important;}
+    [data-testid="stSidebar"] button,.stButton > button,.stDownloadButton > button {border-radius: 8px;font-weight: 600;}
+    [data-testid="stDataFrame"] {border-radius: 10px;}.stAlert {border-radius: 10px;}.main .block-container {max-width: none;padding: 2rem;}
     </style>
     """, unsafe_allow_html=True)
  
