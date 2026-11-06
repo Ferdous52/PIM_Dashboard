@@ -1026,16 +1026,55 @@ def teacher_priority_heatmap(df: pd.DataFrame, staff_name=None):
 def apply_page_css():
     st.markdown("""
     <style>
-    [data-testid="stSidebar"] {background-color: #0F172A;}
-    [data-testid="stSidebar"] * {color: white;}
-    [data-testid="stSidebar"] label {color: white !important;}
-    [data-testid="stSidebar"] [data-testid="stSelectbox"]
-    [data-baseweb="select"] * {color: #111827 !important;}
-    [data-testid="stSidebar"] [data-testid="stSelectbox"]
-    [data-baseweb="select"] > div {background-color: #FFFFFF !important;}
-    [data-baseweb="popover"] [role="option"] {color: #111827 !important;background-color: #FFFFFF !important;}
-    [data-testid="stSidebar"] button,.stButton > button,.stDownloadButton > button {border-radius: 8px;font-weight: 600;}
-    [data-testid="stDataFrame"] {border-radius: 10px;}.stAlert {border-radius: 10px;}.main .block-container {max-width: none;padding: 2rem;}
+    [data-testid="stSidebar"] {
+        background-color: #0F172A !important;
+    }
+
+    /* Keep sidebar headings and labels white */
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"],
+    [data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
+        color: #FFFFFF !important;
+    }
+
+    /* Selectbox text must be dark */
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] [data-baseweb="select"],
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] [data-baseweb="select"] *,
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] input {
+        color: #111827 !important;
+        -webkit-text-fill-color: #111827 !important;
+    }
+
+    /* Selectbox background */
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] [data-baseweb="select"] > div {
+        background-color: #FFFFFF !important;
+    }
+
+    /* Dropdown options */
+    [data-baseweb="popover"] [role="option"] {
+        color: #111827 !important;
+        background-color: #FFFFFF !important;
+    }
+
+    [data-testid="stSidebar"] button,
+    .stButton > button,
+    .stDownloadButton > button {
+        border-radius: 8px;
+        font-weight: 600;
+    }
+
+    [data-testid="stDataFrame"] {
+        border-radius: 10px;
+    }
+
+    .stAlert {
+        border-radius: 10px;
+    }
+
+    .main .block-container {
+        max-width: none;
+        padding: 2rem;
+    }
     </style>
     """, unsafe_allow_html=True)
  
@@ -1162,10 +1201,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
       [data-testid="stMetricLabel"] { color: #CBD5E1 !important; }
       [data-testid="stMetricValue"] { color: #FFFFFF !important; }
       [data-testid="stMetricDelta"] { color: #A7F3D0 !important; }
-      #[data-testid="stSidebar"] { background: #0F172A; }
-      #[data-testid="stSidebar"] * { color: #F8FAFC; }
-      #[data-testid="stSidebar"] [data-baseweb="select"] span {color: #000000 !important;}
-      #[data-testid="stSidebar"] [data-baseweb="select"] > div {background-color: #FFFFFF !important;}
+      
       div[data-testid="stPlotlyChart"] { border-radius: 12px; overflow: hidden; }
       div[data-testid="stDataFrame"] { border-radius: 10px; }
       .pim-section { font-size: 1.08rem; font-weight: 700; color: #0F172A !important; margin: .4rem 0 .8rem; }
