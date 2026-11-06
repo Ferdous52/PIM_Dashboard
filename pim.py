@@ -1030,30 +1030,24 @@ def apply_page_css():
         background-color: #0F172A !important;
     }
 
-    /* Keep sidebar headings and labels white */
-    [data-testid="stSidebar"] label,
-    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"],
-    [data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
-        color: #FFFFFF !important;
+    /* Sidebar labels stay white */
+    [data-testid="stSidebar"] label {
+        color: white !important;
     }
 
-    /* Selectbox text must be dark */
-    [data-testid="stSidebar"] [data-testid="stSelectbox"] [data-baseweb="select"],
-    [data-testid="stSidebar"] [data-testid="stSelectbox"] [data-baseweb="select"] *,
-    [data-testid="stSidebar"] [data-testid="stSelectbox"] input {
-        color: #111827 !important;
-        -webkit-text-fill-color: #111827 !important;
+    /* Selected value inside white dropdown boxes becomes BLACK */
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] div[data-baseweb="select"] span {
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
     }
 
-    /* Selectbox background */
-    [data-testid="stSidebar"] [data-testid="stSelectbox"] [data-baseweb="select"] > div {
-        background-color: #FFFFFF !important;
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] div[data-baseweb="select"] {
+        background-color: white !important;
     }
 
-    /* Dropdown options */
+    /* Dropdown menu options */
     [data-baseweb="popover"] [role="option"] {
-        color: #111827 !important;
-        background-color: #FFFFFF !important;
+        color: black !important;
     }
 
     [data-testid="stSidebar"] button,
@@ -1077,7 +1071,6 @@ def apply_page_css():
     }
     </style>
     """, unsafe_allow_html=True)
- 
  
 def login_page():
     st.markdown("""
