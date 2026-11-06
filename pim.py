@@ -1162,10 +1162,10 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
       [data-testid="stMetricLabel"] { color: #CBD5E1 !important; }
       [data-testid="stMetricValue"] { color: #FFFFFF !important; }
       [data-testid="stMetricDelta"] { color: #A7F3D0 !important; }
-      [data-testid="stSidebar"] { background: #0F172A; }
-      [data-testid="stSidebar"] * { color: #F8FAFC; }
-      [data-testid="stSidebar"] [data-baseweb="select"] span {color: #000000 !important;}
-      [data-testid="stSidebar"] [data-baseweb="select"] > div {background-color: #FFFFFF !important;}
+      #[data-testid="stSidebar"] { background: #0F172A; }
+      #[data-testid="stSidebar"] * { color: #F8FAFC; }
+      #[data-testid="stSidebar"] [data-baseweb="select"] span {color: #000000 !important;}
+      #[data-testid="stSidebar"] [data-baseweb="select"] > div {background-color: #FFFFFF !important;}
       div[data-testid="stPlotlyChart"] { border-radius: 12px; overflow: hidden; }
       div[data-testid="stDataFrame"] { border-radius: 10px; }
       .pim-section { font-size: 1.08rem; font-weight: 700; color: #0F172A !important; margin: .4rem 0 .8rem; }
