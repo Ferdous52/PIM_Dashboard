@@ -1160,7 +1160,7 @@ def dashboard_page(df: pd.DataFrame, long_df: pd.DataFrame, metrics: dict):
       [data-testid="stMetricValue"] { color: #FFFFFF !important; }
       [data-testid="stMetricDelta"] { color: #A7F3D0 !important; }
       [data-testid="stSidebar"] { background: #0F172A; }
-      [data-testid="stSidebar"] * { color: #F8FAFC; }
+      [data-testid="stSidebar"] * { color: #000000; }
       div[data-testid="stPlotlyChart"] { border-radius: 12px; overflow: hidden; }
       div[data-testid="stDataFrame"] { border-radius: 10px; }
       .pim-section { font-size: 1.08rem; font-weight: 700; color: #0F172A !important; margin: .4rem 0 .8rem; }
