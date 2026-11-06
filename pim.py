@@ -1026,30 +1026,50 @@ def teacher_priority_heatmap(df: pd.DataFrame, staff_name=None):
 def apply_page_css():
     st.markdown("""
     <style>
+    /* Sidebar background */
     [data-testid="stSidebar"] {
         background-color: #0F172A !important;
     }
 
-    /* Sidebar labels stay white */
-    [data-testid="stSidebar"] label {
-        color: white !important;
+    /* Sidebar labels and ordinary text */
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] .stMarkdown,
+    [data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
+        color: #FFFFFF !important;
     }
 
-    /* Selected value inside white dropdown boxes becomes BLACK */
-    [data-testid="stSidebar"] [data-testid="stSelectbox"] div[data-baseweb="select"] span {
+    /* Sidebar navigation and radio text */
+    [data-testid="stSidebar"] [role="radiogroup"] *,
+    [data-testid="stSidebar"] button {
+        color: #FFFFFF !important;
+    }
+
+    /* Selected value inside District, Staff member, Support year */
+    [data-testid="stSidebar"] [data-testid="stSelectbox"]
+    [data-baseweb="select"] [class*="singleValue"],
+    [data-testid="stSidebar"] [data-testid="stSelectbox"]
+    [data-baseweb="select"] [class*="value"],
+    [data-testid="stSidebar"] [data-testid="stSelectbox"]
+    [data-baseweb="select"] span {
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
     }
 
-    [data-testid="stSidebar"] [data-testid="stSelectbox"] div[data-baseweb="select"] {
-        background-color: white !important;
+    /* Selectbox white background */
+    [data-testid="stSidebar"] [data-testid="stSelectbox"]
+    [data-baseweb="select"] > div {
+        background-color: #FFFFFF !important;
     }
 
-    /* Dropdown menu options */
+    /* Dropdown options */
     [data-baseweb="popover"] [role="option"] {
-        color: black !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+        background-color: #FFFFFF !important;
     }
 
+    /* Buttons */
     [data-testid="stSidebar"] button,
     .stButton > button,
     .stDownloadButton > button {
